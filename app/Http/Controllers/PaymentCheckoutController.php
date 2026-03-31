@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Order;
+use App\Services\Payments\PaymentCompletionService;
+use App\Services\Payments\PaymentProviderService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Stripe\StripeClient;
+use Throwable;
+
+class PaymentCheckoutController extends Controller
+{
+    public function returnFromProvider(Request $request, string $provider, Order $order, PaymentProviderService $providers, PaymentCompletionService $completion): RedirectResponse
+    {
+        if ($provider === 'stripe') {
+            $sessionId = (string) $request->query('session_id', '');
+            $secret = (string) config('services.stripe.secret', '');
+
+            if ($sessionId !== '' && $secret !== '') {
+                try {
+                    $client = new StripeClient($secret);
+                    $session = $client->checkout->sessions->retrieve($sessionId, []);
+
+                    $isPaid = (string) ($session->payment_status ?? '') === 'paid';
+                    $metadataOrderId = (int) (($session->metadata->order_id ?? 0));
+                    $paymentIntent = (string) ($session->payment_intent ?? '');
+
+                    if ($isPaid && $metadataOrderId === (int) $order->id) {
+                        $completion->markPaidAndNotify($order, 'stripe', $paymentIntent !== '' ? $paymentIntent : null);
+                    }
+                } catch (Throwable $e) {
+                    Log::channel('checkout_stack')->warning('payment.return.stripe.verify_failed', [
+                        'order_id' => $order->id,
+                        'session_id' => $sessionId,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        if ($provider === 'paypal') {
+            $paypalOrderId = (string) $request->query('token', '');
+            if ($paypalOrderId !== '') {
+                $capturedId = $providers->capturePayPalOrder($paypalOrderId);
+                if ($capturedId !== null) {
+                    $completion->markPaidAndNotify($order, 'paypal', $capturedId);
+                }
+            }
+        }
+
+        if ($provider === 'sumup') {
+            // SumUp return means the hosted checkout finished. Final confirmation should still come via webhook/polling.
+            // We keep status pending here if no webhook is configured.
+        }
+
+        session()->flash('shop_toast', [
+            'message' => 'Zahlung erfolgreich — vielen Dank!',
+            'type' => 'success',
+        ]);
+
+        return redirect()->temporarySignedRoute(
+            'checkout.success',
+            now()->addDays(7),
+            ['orderNumber' => $order->order_number],
+        );
+    }
+
+    public function cancelFromProvider(string $provider, Order $order): RedirectResponse
+    {
+        return redirect()
+            ->route('checkout')
+            ->with('payment_error', 'Zahlung fehlgeschlagen oder abgebrochen. Bitte probiere eine andere Methode.');
+    }
+}

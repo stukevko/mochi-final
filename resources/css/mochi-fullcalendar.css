@@ -1,0 +1,159 @@
+/* FullCalendar 6 — Mochi Admin (Host: .mochi-fc-host), an Frontend #040712 angelehnt */
+
+.mochi-fc-host .fc {
+    --fc-border-color: #1f2937;
+    --fc-page-bg-color: #040712;
+    --fc-neutral-bg-color: #0b1120;
+    --fc-neutral-text-color: #a8b4c4;
+    --fc-today-bg-color: rgb(255 122 31 / 0.12);
+    --fc-highlight-color: rgb(255 122 31 / 0.08);
+    --fc-list-event-hover-bg-color: rgb(255 255 255 / 0.05);
+    --fc-event-border-color: transparent;
+    --fc-scrollgrid-stroke-color: #1f2937;
+    --fc-button-bg-color: rgb(15 23 42 / 0.95);
+    --fc-button-border-color: rgb(255 255 255 / 0.12);
+    --fc-button-text-color: #f1f5f9;
+    --fc-button-hover-bg-color: rgb(255 122 31 / 0.18);
+    --fc-button-hover-border-color: rgb(255 148 102 / 0.45);
+    --fc-button-active-bg-color: rgb(255 122 31 / 0.28);
+    --fc-button-active-border-color: rgb(255 122 31 / 0.55);
+}
+
+.mochi-fc-host .fc .fc-scrollgrid,
+.mochi-fc-host .fc .fc-scrollgrid-section-sticky > * {
+    background: #040712;
+}
+
+.mochi-fc-host .fc .fc-toolbar-title {
+    font-family: var(--font-display, 'Instrument Sans', system-ui, sans-serif);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+}
+
+/* Header-Buttons: Pill-Form + Mochi-Glow bei Hover */
+.mochi-fc-host .fc .fc-button {
+    border-radius: 9999px;
+    padding: 0.38em 1em;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: none;
+    transition:
+        box-shadow 0.35s var(--mochi-ease-smooth, ease),
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.2s ease;
+}
+
+.mochi-fc-host .fc .fc-button:hover:not(:disabled) {
+    box-shadow:
+        0 0 0 1px rgb(255 122 31 / 0.25),
+        0 0 24px -6px rgb(255 122 31 / 0.45);
+    transform: translateY(-1px);
+}
+
+.mochi-fc-host .fc .fc-button-primary:not(:disabled):active,
+.mochi-fc-host .fc .fc-button-primary:not(:disabled).fc-button-active {
+    box-shadow:
+        0 0 0 1px rgb(255 122 31 / 0.35),
+        0 0 28px -4px rgb(255 148 102 / 0.4);
+}
+
+.mochi-fc-host .fc .fc-col-header-cell {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    background: #0b1120;
+    border-color: #1f2937;
+}
+
+.mochi-fc-host .fc .fc-daygrid-day {
+    min-height: 5.5rem;
+    background: #040712;
+}
+
+.mochi-fc-host .fc .fc-daygrid-day-frame {
+    border-radius: 0.35rem;
+    margin: 2px;
+}
+
+.mochi-fc-host .fc .fc-daygrid-day-number {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.mochi-fc-host .fc .fc-day-other .fc-daygrid-day-number {
+    color: #475569;
+}
+
+.mochi-fc-host .fc .fc-day-today .fc-daygrid-day-number {
+    color: #ff9466;
+    font-weight: 800;
+}
+
+.mochi-fc-host .fc .fc-day-today:not(.fc-day-other) .fc-daygrid-day-frame {
+    box-shadow: inset 0 0 0 1px rgb(255 122 31 / 0.35);
+}
+
+.mochi-fc-host .fc .fc-event {
+    border-radius: 0.4rem;
+    border-width: 1px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 1px 3px;
+    cursor: pointer;
+}
+
+/* Archiv: Fokus auf kommende Events */
+.mochi-fc-host .fc .fc-event.mochi-fc-event-archived {
+    opacity: 0.4;
+}
+
+.mochi-fc-host .fc .fc-list {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #040712;
+}
+
+.mochi-fc-host .fc .fc-list-day-cushion,
+.mochi-fc-host .fc .fc-list-event {
+    background: transparent;
+}
+
+.mochi-fc-host .fc .fc-list-event:hover td {
+    background: rgb(255 255 255 / 0.05);
+}
+
+.mochi-fc-host .fc .fc-list-event-time {
+    display: none;
+}
+
+.mochi-fc-host .fc .fc-scrollgrid {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.mochi-fc-host .fc .fc-timegrid-slot,
+.mochi-fc-host .fc .fc-timegrid-axis {
+    border-color: #1f2937;
+}
+
+.mochi-fc-host .fc .fc-timegrid-col {
+    background: #040712;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mochi-fc-host .fc * {
+        transition: none !important;
+    }
+
+    .mochi-fc-host .fc .fc-button:hover:not(:disabled) {
+        transform: none;
+    }
+}

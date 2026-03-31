@@ -1,0 +1,1244 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../app/Livewire/**/*.php';
+
+/* Notfall-Reset: bleibt dunkel auch wenn Custom-Utilities aus dem Build fehlen */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 5rem;
+        color-scheme: dark;
+        background-color: #040712;
+    }
+
+    body {
+        background-color: #040712;
+        background-image: linear-gradient(to bottom, #0b1120 0%, #040712 100%);
+        color: #f3f4f6;
+    }
+}
+
+:root {
+    --mochi-ambient-pulse: 24s;
+    /* Hover / Motion: gleichmäßig, „premium“ */
+    --mochi-ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --mochi-ease-breathe: cubic-bezier(0.45, 0.05, 0.35, 1);
+}
+
+@theme {
+    --font-sans:
+        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-display: 'Instrument Sans', var(--font-sans);
+
+    --color-mochi-bg: #070a10;
+    --color-mochi-bg-mid: #0c1220;
+    --color-mochi-surface: #101826;
+    --color-mochi-surface-2: #151e2e;
+    --color-mochi-benefit: #0d121c;
+    --color-mochi-border: oklch(100% 0 0 / 0.08);
+    --color-mochi-text: #f8fafc;
+    --color-mochi-muted: #a8b4c4;
+    --color-mochi-accent: #ff7a1f;
+    --color-mochi-accent-strong: #ffb547;
+    --color-mochi-coral: #ff9466;
+    --color-mochi-glow: oklch(70% 0.19 50);
+
+    /* legacy tokens */
+    --color-mochi-cream: var(--color-mochi-bg);
+    --color-mochi-ink: var(--color-mochi-text);
+}
+
+@keyframes mochi-marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes mochi-hero-neon-bloom {
+    0%,
+    100% {
+        transform: scale(0.94) translate(0, 0.6%);
+        opacity: 0.5;
+    }
+    38% {
+        transform: scale(1.045) translate(0.4%, -0.35%);
+        opacity: 0.76;
+    }
+    62% {
+        transform: scale(0.985) translate(-0.25%, 0.25%);
+        opacity: 0.66;
+    }
+}
+
+@keyframes mochi-hero-product-float {
+    0%,
+    100% {
+        transform: translateY(-5px);
+    }
+    50% {
+        transform: translateY(5px);
+    }
+}
+
+@keyframes mochi-hero-renner-orb {
+    0%,
+    100% {
+        transform: scale(1) translate(0, 0);
+        opacity: 0.38;
+    }
+    45% {
+        transform: scale(1.07) translate(1.5%, -2%);
+        opacity: 0.52;
+    }
+    70% {
+        transform: scale(0.97) translate(-1.5%, 1.5%);
+        opacity: 0.44;
+    }
+}
+
+@keyframes mochi-instagram-marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes mochi-holo-sheen {
+    0%,
+    100% {
+        background-position: 0% 50%;
+        opacity: 0.55;
+    }
+    50% {
+        background-position: 100% 50%;
+        opacity: 0.88;
+    }
+}
+
+@keyframes mochi-benefit-holo-shift {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes mochi-cta-glow-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 8px 24px -12px rgba(255, 122, 31, 0.4),
+            0 0 18px -10px rgba(255, 148, 102, 0.22);
+    }
+    50% {
+        box-shadow:
+            0 10px 30px -10px rgba(255, 122, 31, 0.48),
+            0 0 22px -8px rgba(255, 148, 102, 0.28);
+    }
+}
+
+@keyframes mochi-orb-wander-1 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    22% {
+        transform: translate3d(5%, -4%, 0) scale(1.028);
+    }
+    48% {
+        transform: translate3d(-3.5%, 5.5%, 0) scale(0.978);
+    }
+    71% {
+        transform: translate3d(4.2%, 2.2%, 0) scale(1.02);
+    }
+    100% {
+        transform: translate3d(-2.2%, -2.8%, 0) scale(1);
+    }
+}
+
+@keyframes mochi-orb-wander-2 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1.01);
+    }
+    30% {
+        transform: translate3d(-5.5%, 4%, 0) scale(0.985);
+    }
+    55% {
+        transform: translate3d(4%, -5.5%, 0) scale(1.035);
+    }
+    100% {
+        transform: translate3d(2%, 2.8%, 0) scale(1);
+    }
+}
+
+@keyframes mochi-orb-wander-3 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    28% {
+        transform: translate3d(4%, 4.5%, 0) scale(1.018);
+    }
+    52% {
+        transform: translate3d(-4.5%, -3.2%, 0) scale(0.972);
+    }
+    78% {
+        transform: translate3d(2.2%, -5.5%, 0) scale(1.025);
+    }
+    100% {
+        transform: translate3d(-1.2%, 1.8%, 0) scale(1.005);
+    }
+}
+
+@keyframes mochi-orb-wander-4 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(0.992);
+    }
+    35% {
+        transform: translate3d(5.8%, 2.8%, 0) scale(1.03);
+    }
+    65% {
+        transform: translate3d(-2.8%, -5.8%, 0) scale(0.982);
+    }
+    100% {
+        transform: translate3d(0.8%, -1.2%, 0) scale(1);
+    }
+}
+
+@keyframes mochi-pokeball-drift {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    25% {
+        transform: translate3d(1.8vw, -1.6vw, 0) rotate(0.9deg);
+    }
+    50% {
+        transform: translate3d(-1.4vw, 2vw, 0) rotate(-0.75deg);
+    }
+    75% {
+        transform: translate3d(1.1vw, 1.2vw, 0) rotate(0.45deg);
+    }
+}
+
+@keyframes mochi-pokeball-drift-alt {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    22% {
+        transform: translate3d(-1.6vw, 1.5vw, 0) rotate(-0.85deg);
+    }
+    52% {
+        transform: translate3d(1.9vw, -1.3vw, 0) rotate(0.95deg);
+    }
+    78% {
+        transform: translate3d(-1vw, -1.5vw, 0) rotate(-0.4deg);
+    }
+}
+
+@layer utilities {
+    .animate-mochi-marquee {
+        animation: mochi-marquee 24s linear infinite;
+    }
+
+    .animate-mochi-instagram-marquee {
+        animation: mochi-instagram-marquee 42s linear infinite;
+    }
+
+    /* Weiches Neon hinter dem Renner (blur-3xl-Niveau — organisches „Atmen“) */
+    .mochi-hero-neon-ring {
+        position: absolute;
+        inset: -20%;
+        border-radius: 50%;
+        background: radial-gradient(
+            circle at 50% 42%,
+            rgb(255 180 90 / 0.5) 0%,
+            rgb(255 122 31 / 0.3) 24%,
+            rgb(255 100 50 / 0.1) 50%,
+            transparent 74%
+        );
+        filter: blur(64px);
+        animation: mochi-hero-neon-bloom 6.8s var(--mochi-ease-breathe) infinite;
+        will-change: transform, opacity;
+    }
+
+    .mochi-hero-product-float {
+        animation: mochi-hero-product-float 5.5s ease-in-out infinite;
+        will-change: transform;
+    }
+
+    .mochi-hero-renner-orb {
+        height: 100%;
+        width: 100%;
+        border-radius: 50%;
+        background: radial-gradient(
+            circle at 45% 40%,
+            rgb(255 122 31 / 0.26) 0%,
+            rgb(255 148 102 / 0.1) 35%,
+            rgb(96 165 250 / 0.09) 42%,
+            transparent 68%
+        );
+        filter: blur(56px);
+        animation: mochi-hero-renner-orb 18s ease-in-out infinite;
+        will-change: transform, opacity;
+    }
+
+    .mochi-benefit-icon-metallic {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        padding: 0.2rem;
+    }
+
+    .mochi-benefit-icon-metallic::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        background: linear-gradient(
+            128deg,
+            rgb(255 255 255 / 0.42) 0%,
+            rgb(255 200 120 / 0.28) 28%,
+            rgb(255 122 31 / 0.45) 52%,
+            rgb(180 220 255 / 0.18) 72%,
+            rgb(255 255 255 / 0.16) 100%
+        );
+        opacity: 0.58;
+        mix-blend-mode: overlay;
+        pointer-events: none;
+    }
+
+    .mochi-benefit-icon-metallic::after {
+        content: '';
+        position: absolute;
+        inset: -18%;
+        border-radius: inherit;
+        background: conic-gradient(
+            from 45deg,
+            transparent 0deg,
+            rgb(255 200 120 / 0.12) 55deg,
+            rgb(120 200 255 / 0.1) 120deg,
+            rgb(255 100 200 / 0.08) 200deg,
+            transparent 280deg
+        );
+        opacity: 0.35;
+        mix-blend-mode: soft-light;
+        pointer-events: none;
+        animation: mochi-benefit-holo-shift 14s linear infinite;
+    }
+
+    .mochi-token-holo-wrap {
+        position: relative;
+        border-radius: 1rem;
+    }
+
+    .mochi-token-holo-sheen {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border-radius: inherit;
+        pointer-events: none;
+        background: linear-gradient(
+            118deg,
+            transparent 0%,
+            rgb(255 210 150 / 0.2) 22%,
+            rgb(140 200 255 / 0.14) 45%,
+            rgb(255 150 200 / 0.12) 62%,
+            transparent 88%
+        );
+        background-size: 220% 220%;
+        mix-blend-mode: soft-light;
+        animation: mochi-holo-sheen 9s ease-in-out infinite;
+    }
+
+    .mochi-benefit-icon-metallic svg {
+        position: relative;
+        z-index: 1;
+        filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.45));
+    }
+
+    /* Anker/Panels: Tag + .group erhöht Spezifität gegenüber Tailwind border-white/10 */
+    a.mochi-home-snap-card,
+    button.mochi-home-snap-card {
+        outline: none;
+        transition:
+            box-shadow 0.45s var(--mochi-ease-smooth),
+            border-color 0.45s var(--mochi-ease-smooth),
+            transform 0.45s var(--mochi-ease-smooth),
+            filter 0.45s var(--mochi-ease-smooth);
+    }
+
+    a.mochi-home-snap-card:hover,
+    button.mochi-home-snap-card:hover {
+        border-color: rgb(255 122 31 / 0.4);
+        transform: translateY(-4px) scale(1.02);
+        filter: brightness(1.07);
+        box-shadow:
+            inset 0 0 0 1px rgb(255 122 31 / 0.14),
+            0 0 0 1px rgb(255 122 31 / 0.22),
+            0 0 44px -4px rgb(255 122 31 / 0.42),
+            0 22px 52px -28px rgb(0 0 0 / 0.72);
+    }
+
+    a.mochi-home-snap-card:focus-visible,
+    button.mochi-home-snap-card:focus-visible {
+        border-color: rgb(255 122 31 / 0.45);
+        transform: translateY(-2px) scale(1.01);
+        filter: brightness(1.05);
+        box-shadow:
+            0 0 0 2px rgb(255 122 31 / 0.35),
+            0 0 56px -4px rgb(255 148 102 / 0.42),
+            0 22px 52px -28px rgb(0 0 0 / 0.72);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .animate-mochi-instagram-marquee {
+            animation: none;
+        }
+
+        .mochi-benefit-icon-metallic::after {
+            animation: none;
+        }
+
+        .mochi-token-holo-sheen {
+            animation: none !important;
+            opacity: 0.65;
+        }
+
+        .mochi-hero-neon-ring {
+            animation: none;
+            opacity: 0.72;
+            transform: scale(1);
+        }
+
+        .mochi-hero-product-float {
+            animation: none;
+        }
+
+        .mochi-hero-renner-orb {
+            animation: none;
+            opacity: 0.4;
+        }
+
+        a.mochi-home-snap-card:hover,
+        button.mochi-home-snap-card:hover {
+            transform: translateY(-1px);
+            filter: none;
+        }
+    }
+
+    /* Haupt-Hintergrund: exakt Vorlage + Bokeh-Schichten (über Base-Gradient) */
+    .mochi-page-gradient {
+        background-color: #040712;
+        background-image:
+            radial-gradient(ellipse 85% 55% at 50% -30%, rgba(255, 122, 31, 0.07), transparent 58%),
+            radial-gradient(circle 42% at 12% 28%, rgba(96, 165, 250, 0.045), transparent 55%),
+            radial-gradient(circle 38% at 88% 22%, rgba(255, 180, 71, 0.035), transparent 50%),
+            radial-gradient(circle 32% at 70% 88%, rgba(255, 122, 31, 0.03), transparent 45%),
+            linear-gradient(to bottom, #0b1120 0%, #040712 100%);
+    }
+
+    /* Header: oben transparent, nach Scroll Glas + blur-md */
+    .mochi-header {
+        border-bottom: 1px solid transparent;
+        background: transparent;
+        transition:
+            background 0.45s var(--mochi-ease-smooth),
+            border-color 0.45s var(--mochi-ease-smooth),
+            box-shadow 0.45s var(--mochi-ease-smooth),
+            backdrop-filter 0.45s var(--mochi-ease-smooth),
+            -webkit-backdrop-filter 0.45s var(--mochi-ease-smooth);
+    }
+
+    .mochi-header--scrolled {
+        border-bottom-color: rgb(255 255 255 / 0.06);
+        background: rgb(4 7 18 / 0.72);
+        box-shadow: 0 10px 28px -16px rgb(0 0 0 / 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+
+    @supports not (backdrop-filter: blur(1px)) {
+        .mochi-header--scrolled {
+            background: rgb(4 7 18 / 0.92);
+        }
+    }
+
+    /* Mobile: Burger-Menü — Navigation unterhalb der Zeile, volle Breite */
+    @media (max-width: 767px) {
+        .mochi-header--nav-open #mochi-site-nav {
+            display: flex !important;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            width: 100%;
+            padding-top: 0.75rem;
+            margin-top: 0.25rem;
+            border-top: 1px solid rgb(255 255 255 / 0.1);
+        }
+    }
+
+    /* Legacy / Komponenten, die noch „immer Glas“ erwarten */
+    .mochi-header-glass {
+        border-bottom: 1px solid rgb(255 255 255 / 0.08);
+        background: linear-gradient(180deg, rgb(11 17 32 / 0.68) 0%, rgb(11 17 32 / 0.48) 100%);
+        box-shadow:
+            0 1px 0 0 rgb(255 148 102 / 0.06),
+            0 10px 32px -12px rgb(0 0 0 / 0.55);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+
+    @supports not (backdrop-filter: blur(1px)) {
+        .mochi-header-glass {
+            background: rgb(11 17 32 / 0.92);
+        }
+    }
+
+    /* Komponenten-Layout (Shop-Branding): Slide-over — Glass Dark */
+    .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        background-color: rgb(4 7 18 / 0.65);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .drawer-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        z-index: 60;
+        display: flex;
+        height: 100%;
+        width: 100%;
+        max-width: 24rem;
+        flex-direction: column;
+        border-left: 1px solid rgb(255 255 255 / 0.1);
+        background: linear-gradient(180deg, rgb(8 12 18 / 0.96) 0%, rgb(4 7 18 / 0.94) 100%);
+        box-shadow: -12px 0 48px -12px rgb(0 0 0 / 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .drawer-panel-motion {
+        will-change: transform;
+    }
+
+    /* Farbige Ambient-Orbs (Pastell — extrem weich, nur transform animiert) */
+    .mochi-orb-engine {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .mochi-orb-anchor {
+        position: absolute;
+        width: 0;
+        height: 0;
+        will-change: transform;
+    }
+
+    .mochi-orb-anchor--1 {
+        top: 6%;
+        left: -12%;
+    }
+
+    .mochi-orb-anchor--2 {
+        top: 38%;
+        right: -18%;
+        left: auto;
+    }
+
+    .mochi-orb-anchor--3 {
+        bottom: -8%;
+        left: 18%;
+        top: auto;
+    }
+
+    .mochi-orb-anchor--4 {
+        top: 12%;
+        right: 28%;
+        left: auto;
+    }
+
+    .mochi-orb-drift {
+        position: absolute;
+        left: 0;
+        top: 0;
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        animation-timing-function: ease-in-out;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+    }
+
+    .mochi-orb-drift--1 {
+        animation-name: mochi-orb-wander-1;
+        animation-duration: 48s;
+        animation-delay: -2s;
+        animation-timing-function: var(--mochi-ease-breathe);
+    }
+
+    .mochi-orb-drift--2 {
+        animation-name: mochi-orb-wander-2;
+        animation-duration: 56s;
+        animation-delay: -7s;
+        animation-timing-function: var(--mochi-ease-breathe);
+    }
+
+    .mochi-orb-drift--3 {
+        animation-name: mochi-orb-wander-3;
+        animation-duration: 52s;
+        animation-delay: -11s;
+        animation-timing-function: var(--mochi-ease-breathe);
+    }
+
+    .mochi-orb-drift--4 {
+        animation-name: mochi-orb-wander-4;
+        animation-duration: 60s;
+        animation-delay: -4s;
+        animation-timing-function: var(--mochi-ease-breathe);
+    }
+
+    @media (max-width: 767px) {
+        .mochi-orb-drift--1 {
+            animation-duration: 56s;
+        }
+
+        .mochi-orb-drift--2 {
+            animation-duration: 64s;
+        }
+
+        .mochi-orb-drift--3 {
+            animation-duration: 58s;
+        }
+
+        .mochi-orb-drift--4 {
+            animation-duration: 68s;
+        }
+    }
+
+    .mochi-orb-bloom {
+        width: min(92vw, 40rem);
+        height: min(92vw, 40rem);
+        margin-left: -50%;
+        margin-top: -50%;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.32;
+    }
+
+    .mochi-orb-bloom--orange {
+        background: radial-gradient(circle at 40% 50%, rgb(255 150 90 / 0.55) 0%, rgb(255 122 31 / 0.22) 45%, transparent 70%);
+        opacity: 0.4;
+    }
+
+    .mochi-orb-bloom--sky {
+        background: radial-gradient(circle at 55% 40%, rgb(129 180 255 / 0.45) 0%, rgb(70 130 230 / 0.18) 48%, transparent 72%);
+        opacity: 0.36;
+    }
+
+    .mochi-orb-bloom--coral-soft {
+        background: radial-gradient(circle at 50% 50%, rgb(255 148 102 / 0.4) 0%, rgb(255 120 70 / 0.15) 42%, transparent 72%);
+        opacity: 0.34;
+    }
+
+    .mochi-orb-bloom--azure {
+        background: radial-gradient(circle at 35% 55%, rgb(110 190 255 / 0.42) 0%, rgb(59 130 246 / 0.16) 46%, transparent 70%);
+        opacity: 0.37;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mochi-orb-drift {
+            animation: none !important;
+        }
+    }
+
+    /* Weichgezeichnete Pokéball-„Blasen“ (Parallax äußerer Anker, driften innen) */
+    .mochi-pokeball-anchor {
+        position: absolute;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+        will-change: transform;
+    }
+
+    .mochi-pokeball-anchor--1 {
+        top: 8%;
+        left: 2%;
+    }
+
+    .mochi-pokeball-anchor--2 {
+        top: 48%;
+        right: -6%;
+        left: auto;
+    }
+
+    .mochi-pokeball-anchor--3 {
+        bottom: 2%;
+        left: 28%;
+        top: auto;
+    }
+
+    .mochi-pokeball-anchor--4 {
+        top: 18%;
+        right: 22%;
+        left: auto;
+    }
+
+    .mochi-pokeball-drift {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: min(78vw, 26rem);
+        height: min(78vw, 26rem);
+        margin-left: -50%;
+        margin-top: -50%;
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        animation: mochi-pokeball-drift var(--mochi-pokeball-drift-ms, 44s) var(--mochi-ease-breathe) infinite;
+    }
+
+    .mochi-pokeball-drift--a {
+        --mochi-pokeball-drift-ms: 108s;
+    }
+
+    .mochi-pokeball-drift--b {
+        width: min(68vw, 22rem);
+        height: min(68vw, 22rem);
+        --mochi-pokeball-drift-ms: 128s;
+        animation-name: mochi-pokeball-drift-alt;
+        animation-delay: -9s;
+    }
+
+    .mochi-pokeball-drift--c {
+        width: min(88vw, 32rem);
+        height: min(88vw, 32rem);
+        --mochi-pokeball-drift-ms: 142s;
+        animation-delay: -15s;
+    }
+
+    .mochi-pokeball-drift--d {
+        width: min(62vw, 20rem);
+        height: min(62vw, 20rem);
+        --mochi-pokeball-drift-ms: 118s;
+        animation-name: mochi-pokeball-drift-alt;
+        animation-delay: -22s;
+    }
+
+    @media (max-width: 767px) {
+        .mochi-pokeball-drift--a {
+            --mochi-pokeball-drift-ms: 124s;
+        }
+
+        .mochi-pokeball-drift--b {
+            --mochi-pokeball-drift-ms: 138s;
+        }
+    }
+
+    /* Extrem weich (Tailwind blur-3xl ≈ 64px — hier noch eine Stufe weicher für die Lichtaura) */
+    .mochi-pokeball-blur {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.48;
+        transform: scale(1.12);
+    }
+
+    .mochi-pokeball-blur--soft {
+        filter: blur(96px);
+        opacity: 0.4;
+    }
+
+    /*
+     | Sichtbare Kugel: fast unsichtbar — Wirkung kommt vom Blur-Parent (.mochi-pokeball-blur).
+     | mix-blend-mode: soft-light — farblich an den Seitenhintergrund angepasst.
+     */
+    .mochi-pokeball-face.mochi-orb-ball {
+        opacity: 0.06;
+        mix-blend-mode: soft-light;
+    }
+
+    /* Klassische Pokéball-Hälften + Band (vor Blur erkennbar, danach weiche Aura) */
+    .mochi-pokeball-face {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(
+            180deg,
+            #5a6578 0%,
+            #495364 44%,
+            #2a3140 47%,
+            #121820 49%,
+            #121820 51%,
+            #2a3140 52.5%,
+            #8a9caf 53%,
+            #b0c0d4 100%
+        );
+        box-shadow:
+            inset 0 10px 28px -8px rgb(255 255 255 / 0.12),
+            inset 0 -16px 32px -10px rgb(0 0 0 / 0.35);
+    }
+
+    .mochi-pokeball-face::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 20%;
+        height: 20%;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #e8eef5 0%, #9aa8bc 45%, #3d4758 100%);
+        box-shadow:
+            0 0 0 4px #1a222c,
+            0 0 0 7px #3d4a5c,
+            0 0 0 10px rgb(255 255 255 / 0.08);
+    }
+
+    .mochi-pokeball-face::after {
+        content: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mochi-pokeball-drift {
+            animation: none !important;
+        }
+
+        .mochi-pokeball-blur {
+            filter: blur(56px);
+            opacity: 0.24;
+        }
+    }
+
+    /* Frosted Glass — ruhig, ohne orangenen Schein um Karten */
+    .mochi-card {
+        @apply rounded-2xl border border-white/5 backdrop-blur-xl transition duration-[420ms];
+        transition-timing-function: var(--mochi-ease-smooth);
+        background: linear-gradient(
+            155deg,
+            rgb(255 255 255 / 0.06) 0%,
+            rgb(15 23 42 / 0.34) 42%,
+            rgb(4 7 18 / 0.5) 100%
+        );
+        box-shadow:
+            0 0 0 1px rgb(255 255 255 / 0.04),
+            inset 0 1px 0 0 rgb(255 255 255 / 0.05),
+            0 20px 48px -28px rgb(0 0 0 / 0.75);
+    }
+
+    .mochi-card-hover {
+        @apply hover:-translate-y-[5px] hover:border-white/15;
+        transition-timing-function: var(--mochi-ease-smooth);
+    }
+
+    .mochi-card.mochi-card-hover:hover {
+        box-shadow:
+            0 0 0 1px rgb(255 255 255 / 0.06),
+            inset 0 1px 0 0 rgb(255 255 255 / 0.06),
+            0 28px 56px -24px rgb(0 0 0 / 0.82),
+            0 0 0 1px rgb(255 149 77 / 0.18);
+    }
+
+    .mochi-benefit-tile {
+        @apply rounded-3xl border border-white/5 p-6 shadow-[0_20px_48px_-32px_rgba(0,0,0,0.8)] backdrop-blur-xl transition duration-[420ms];
+        transition-timing-function: var(--mochi-ease-smooth);
+        background: linear-gradient(
+            165deg,
+            rgb(255 255 255 / 0.05) 0%,
+            rgb(17 24 39 / 0.5) 38%,
+            rgb(4 7 18 / 0.55) 100%
+        );
+        box-shadow:
+            inset 0 1px 0 0 rgb(255 255 255 / 0.05),
+            0 20px 48px -32px rgb(0 0 0 / 0.8);
+    }
+
+    .mochi-benefit-tile:hover {
+        @apply -translate-y-1 border-white/12;
+        box-shadow:
+            inset 0 1px 0 0 rgb(255 255 255 / 0.06),
+            0 26px 52px -28px rgb(0 0 0 / 0.85),
+            0 0 0 1px rgb(255 149 77 / 0.15);
+    }
+
+    /*
+     | Atmosphere: Pokéball- & Farb-Orbs liegen in #mochi-parallax-root (partials + app.css).
+     | Sammelkarten: diagonaler Glanz-Overlay über der Kachel.
+     */
+    .mochi-collectible-card {
+        position: relative;
+        isolation: isolate;
+    }
+
+    @keyframes mochi-holo-shimmer {
+        from {
+            transform: translateX(-25%);
+        }
+        to {
+            transform: translateX(25%);
+        }
+    }
+
+    .mochi-collectible-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        border-radius: inherit;
+        pointer-events: none;
+        background: linear-gradient(
+            125deg,
+            rgb(255 255 255 / 0.12) 0%,
+            transparent 40%,
+            transparent 58%,
+            rgb(255 122 31 / 0.07) 100%
+        );
+        background-size: 200% 200%;
+        background-position: 0% 50%;
+        opacity: 0;
+        transform: translateX(-15%);
+        transition:
+            opacity 0.25s var(--mochi-ease-smooth),
+            transform 0.25s var(--mochi-ease-smooth);
+        will-change: transform;
+    }
+
+    .mochi-collectible-card:hover::before {
+        opacity: 0.85;
+        animation: mochi-holo-shimmer 0.9s var(--mochi-ease-smooth) both;
+    }
+
+    /* Holo lag unter allen Kindern (z-index 2) und wirkte „tot“ — leicht über dem Media, ohne Text zu killen */
+    a.mochi-collectible-card.mochi-home-snap-card:hover::before {
+        z-index: 4;
+        mix-blend-mode: soft-light;
+        opacity: 0.55;
+        animation: mochi-holo-shimmer 0.95s var(--mochi-ease-smooth) both;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mochi-collectible-card::before {
+            transition: opacity 0.2s var(--mochi-ease-smooth);
+            animation: none !important;
+        }
+
+        .mochi-collectible-card:hover::before {
+            opacity: 0.75;
+        }
+    }
+
+    .mochi-collectible-card > * {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Event-Poster: ~80 % Bild, kompakter Text unten */
+    .mochi-event-poster {
+        height: min(92vw, 26rem);
+    }
+
+    @media (min-width: 640px) {
+        .mochi-event-poster {
+            height: 26rem;
+        }
+    }
+
+    .mochi-event-poster__media {
+        flex: 4 1 0;
+        min-height: 0;
+    }
+
+    .mochi-event-poster__meta {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    .mochi-cta {
+        @apply inline-flex items-center justify-center rounded-full px-7 py-3.5 text-sm font-bold tracking-tight text-[#0b0f16] transition duration-[320ms];
+        transition-timing-function: var(--mochi-ease-smooth);
+        background: linear-gradient(135deg, var(--color-mochi-accent) 0%, var(--color-mochi-accent-strong) 100%);
+        box-shadow:
+            0 8px 24px -10px rgba(255, 122, 31, 0.45),
+            0 0 16px -10px rgba(255, 148, 102, 0.25);
+    }
+
+    .mochi-cta:hover {
+        @apply -translate-y-0.5;
+        box-shadow:
+            0 10px 28px -8px rgba(255, 122, 31, 0.52),
+            0 0 20px -8px rgba(255, 148, 102, 0.3);
+    }
+
+    .mochi-cta-pulse {
+        animation: mochi-cta-glow-pulse var(--mochi-ambient-pulse, 24s) ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mochi-cta-pulse {
+            animation: none;
+        }
+    }
+
+    .mochi-cta-muted {
+        @apply inline-flex items-center justify-center rounded-full border-2 border-mochi-accent bg-transparent px-7 py-3.5 text-sm font-bold tracking-tight text-mochi-text transition duration-[320ms];
+        transition-timing-function: var(--mochi-ease-smooth);
+        box-shadow: 0 0 12px -8px rgba(255, 122, 31, 0.25);
+    }
+
+    .mochi-cta-muted:hover {
+        @apply -translate-y-0.5 border-mochi-accent-strong text-[#0b0f16];
+        background: linear-gradient(135deg, var(--color-mochi-accent) 0%, var(--color-mochi-accent-strong) 100%);
+        box-shadow:
+            0 10px 28px -8px rgba(255, 122, 31, 0.5),
+            0 0 18px -8px rgba(255, 148, 102, 0.28);
+    }
+
+    .mochi-logo-crisp {
+        image-rendering: auto;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+    }
+
+    .mochi-hero-inner-glow {
+        box-shadow:
+            inset 0 0 64px -24px rgba(255, 122, 31, 0.06),
+            inset 0 -36px 64px -36px rgba(0, 0, 0, 0.35);
+    }
+
+    .mochi-hero-gradient-text {
+        @apply bg-gradient-to-br from-white via-slate-200 to-sky-200/90 bg-clip-text font-display font-bold text-transparent;
+    }
+
+    .mochi-brand-wordmark {
+        @apply font-display font-extrabold tracking-tight text-white;
+        text-shadow: 0 0 1px rgb(255 255 255 / 0.2);
+    }
+
+    /* Früher: Spielkarten-Symbole im ::before — wirkten wie Mau-Mau; entfernt. */
+    .mochi-section-watermark {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .mochi-section-watermark > .mochi-section-inner {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+@layer components {
+    .cms-content {
+        @apply leading-relaxed text-mochi-text/95;
+    }
+    .cms-content h2 {
+        @apply font-display mt-8 text-xl font-semibold text-mochi-text;
+    }
+    .cms-content h3 {
+        @apply font-display mt-6 text-lg font-semibold text-mochi-text;
+    }
+    .cms-content p {
+        @apply mt-3 text-mochi-muted;
+    }
+    .cms-content ul {
+        @apply mt-3 list-disc space-y-1 pl-5 text-mochi-muted;
+    }
+    .cms-content ol {
+        @apply mt-3 list-decimal space-y-1 pl-5 text-mochi-muted;
+    }
+    .cms-content a {
+        @apply font-medium text-mochi-accent underline underline-offset-2 hover:text-mochi-accent-strong;
+    }
+
+    /** Obsidian Shop: Formularfelder (Checkout, Filter) */
+    .mochi-input {
+        @apply border border-white/15 bg-[#080c12]/80 text-mochi-text shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm placeholder:text-mochi-muted;
+    }
+
+    .mochi-input:focus {
+        @apply border-mochi-accent/50 outline-none ring-2 ring-mochi-accent/30;
+    }
+
+    /**
+     * Primär-Aktionen Checkout / Shop — gleiche Logik wie .mochi-cta (Gradient + Glow).
+     */
+    .mochi-gradient-button {
+        @apply inline-flex min-h-12 w-full items-center justify-center rounded-full px-6 py-3.5 text-sm font-bold tracking-tight text-[#0b0f16] transition duration-[320ms] disabled:cursor-not-allowed disabled:opacity-60;
+        transition-timing-function: var(--mochi-ease-smooth);
+        background: linear-gradient(135deg, var(--color-mochi-accent) 0%, var(--color-mochi-accent-strong) 100%);
+        box-shadow:
+            0 8px 24px -10px rgba(255, 122, 31, 0.45),
+            0 0 16px -10px rgba(255, 148, 102, 0.25);
+    }
+
+    .mochi-gradient-button:hover:not(:disabled) {
+        @apply -translate-y-0.5;
+        box-shadow:
+            0 10px 28px -8px rgba(255, 122, 31, 0.52),
+            0 0 20px -8px rgba(255, 148, 102, 0.3);
+    }
+
+    .mochi-gradient-button-sm {
+        @apply min-h-11 py-2.5 text-xs sm:text-sm;
+    }
+
+    /** Sticky Checkout-Bar (mobil) — Obsidian */
+    .checkout-sticky-cta {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 45;
+        border-top: 1px solid rgb(255 255 255 / 0.1);
+        background: linear-gradient(180deg, rgb(4 7 18 / 0.92) 0%, rgb(8 12 18 / 0.98) 100%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+}
+
+/* Shop / Livewire: leichte Navigation + Warenkorb-Feedback */
+body.lw-navigating-fast main {
+    opacity: 0.985;
+    transition: opacity 70ms linear;
+}
+
+.nav-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 120;
+    height: 2px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left;
+    opacity: 0;
+    background: linear-gradient(90deg, var(--color-mochi-accent, #ff7a1f), #60a5fa);
+    transition:
+        transform 220ms ease-out,
+        opacity 120ms linear;
+}
+
+body.lw-navigating-fast .nav-progress {
+    transform: scaleX(0.9);
+    opacity: 1;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@keyframes mochi-cart-bump {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.cart-bump {
+    animation: mochi-cart-bump 320ms ease;
+}
+
+.cart-ping {
+    animation: ping 500ms ease-out 1;
+}
+
+#global-shop-toast {
+    transform: translateY(-10px);
+    opacity: 0;
+    transition:
+        transform 0.38s cubic-bezier(0.34, 1.45, 0.64, 1),
+        opacity 0.28s ease;
+}
+
+#global-shop-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+#global-shop-toast.toast-success #global-shop-toast-inner {
+    border-color: rgb(74 222 128 / 0.35);
+}
+
+#global-shop-toast.toast-error #global-shop-toast-inner {
+    border-color: rgb(248 113 113 / 0.45);
+}
+
+#global-shop-toast.toast-info #global-shop-toast-inner {
+    border-color: rgb(96 165 250 / 0.4);
+}
+
+/* Radial „Pulse“ beim Warenkorb-Update (cartUpdated) */
+.mochi-cart-icon-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mochi-cart-radial-burst {
+    position: absolute;
+    inset: -40%;
+    z-index: 0;
+    border-radius: 9999px;
+    pointer-events: none;
+    background: radial-gradient(
+        circle,
+        rgb(255 122 31 / 0.55) 0%,
+        rgb(255 148 102 / 0.22) 38%,
+        transparent 72%
+    );
+    opacity: 0;
+    transform: scale(0.45);
+}
+
+.mochi-cart-icon-wrap.mochi-cart-radial-active .mochi-cart-radial-burst {
+    animation: mochi-cart-radial-glow 0.88s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes mochi-cart-radial-glow {
+    0% {
+        opacity: 0;
+        transform: scale(0.35);
+    }
+    28% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2.15);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mochi-cart-icon-wrap.mochi-cart-radial-active .mochi-cart-radial-burst {
+        animation: none;
+        opacity: 0.55;
+        transform: scale(1);
+    }
+}

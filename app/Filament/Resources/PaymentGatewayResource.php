@@ -116,8 +116,13 @@ class PaymentGatewayResource extends Resource
                             ->password()
                             ->revealable()
                             ->maxLength(512)
-                            ->helperText('Wert aus dem SumUp-Händlerbereich (API).'),
-                    ]),
+                            ->helperText('OAuth-Token aus dem SumUp-Entwicklerbereich. Alternativ SUMUP_TOKEN in der .env.'),
+                        Forms\Components\TextInput::make('merchant_sumup_merchant_code')
+                            ->label('Merchant Code')
+                            ->maxLength(64)
+                            ->helperText('Händlercode aus dem SumUp-Dashboard. Alternativ SUMUP_MERCHANT_CODE in der .env.'),
+                    ])
+                    ->columns(2),
 
                 Section::make('Experten: Schlüssel/Wert-Tabelle')
                     ->description('Nur nötig für Sonderfälle oder wenn Ihre Agentur zusätzliche Felder braucht. Überschreibt nicht automatisch die Felder oben, sondern ergänzt das gespeicherte Konfigurations-JSON.')

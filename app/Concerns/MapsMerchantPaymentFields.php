@@ -38,6 +38,8 @@ trait MapsMerchantPaymentFields
             ?? ''
         );
 
+        $data['merchant_sumup_merchant_code'] = (string) ($record->getConfigValue('merchant_code') ?? '');
+
         return $data;
     }
 
@@ -63,8 +65,13 @@ trait MapsMerchantPaymentFields
             }
         }
 
-        if ($code === 'sumup' && filled($data['merchant_sumup_key'] ?? null)) {
-            $config['api_key'] = trim((string) $data['merchant_sumup_key']);
+        if ($code === 'sumup') {
+            if (filled($data['merchant_sumup_key'] ?? null)) {
+                $config['api_key'] = trim((string) $data['merchant_sumup_key']);
+            }
+            if (filled($data['merchant_sumup_merchant_code'] ?? null)) {
+                $config['merchant_code'] = trim((string) $data['merchant_sumup_merchant_code']);
+            }
         }
 
         unset(
@@ -72,6 +79,7 @@ trait MapsMerchantPaymentFields
             $data['merchant_paypal_client_id'],
             $data['merchant_paypal_secret'],
             $data['merchant_sumup_key'],
+            $data['merchant_sumup_merchant_code'],
         );
 
         $data['config'] = $config;

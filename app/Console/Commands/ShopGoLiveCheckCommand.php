@@ -21,22 +21,16 @@ class ShopGoLiveCheckCommand extends Command
         $rows[] = $this->row('Environment', 'APP_DEBUG=false', $envOk, $envOk ? 'OK' : 'APP_DEBUG ist true');
         $allOk = $allOk && $envOk;
 
-        $stripeSecret = (string) config('services.stripe.secret', '');
-        $paypalClientId = (string) config('services.paypal.client_id', '');
-        $paypalSecret = (string) config('services.paypal.secret', '');
-        $paypalMode = (string) config('services.paypal.mode', 'sandbox');
         $sumupToken = (string) config('services.sumup.token', '');
+        $sumupMerchantCode = (string) config('services.sumup.merchant_code', '');
 
-        $stripeLiveOk = str_starts_with($stripeSecret, 'sk_live_');
-        $paypalLiveOk = $paypalMode === 'live' && $paypalClientId !== '' && $paypalSecret !== '';
-        $sumupOk = $sumupToken !== '';
-        $paymentsOk = $stripeLiveOk && $paypalLiveOk && $sumupOk;
+        $sumupOk = $sumupToken !== '' && $sumupMerchantCode !== '';
+        $paymentsOk = $sumupOk;
 
         $paymentDetail = sprintf(
-            'Stripe live: %s, PayPal live: %s, SumUp token: %s',
-            $stripeLiveOk ? 'yes' : 'no',
-            $paypalLiveOk ? 'yes' : 'no',
-            $sumupOk ? 'yes' : 'no'
+            'SumUp token: %s, merchant code: %s',
+            $sumupToken !== '' ? 'yes' : 'no',
+            $sumupMerchantCode !== '' ? 'yes' : 'no',
         );
         $rows[] = $this->row('Payments', 'Live-Keys vorhanden', $paymentsOk, $paymentDetail);
         $allOk = $allOk && $paymentsOk;

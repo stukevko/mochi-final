@@ -35,7 +35,7 @@ class CheckoutPage extends Component
     public string $city = '';
     public string $country = 'DE';
     public string $notes = '';
-    public string $payment_method = 'invoice';
+    public string $payment_method = 'sumup';
 
     public function mount(): void
     {
@@ -43,6 +43,16 @@ class CheckoutPage extends Component
             $user = Auth::user();
             $this->first_name = (string) ($user->name ?? '');
             $this->email = (string) ($user->email ?? '');
+        }
+
+        $methods = $this->paymentMethods;
+        if ($methods === []) {
+            return;
+        }
+
+        $codes = collect($methods)->pluck('code')->all();
+        if (! in_array($this->payment_method, $codes, true)) {
+            $this->payment_method = (string) ($methods[0]['code'] ?? 'sumup');
         }
     }
 
@@ -80,6 +90,13 @@ class CheckoutPage extends Component
         }
 
         RateLimiter::hit($rateKey, 60);
+
+        $allowedMethods = collect($this->paymentMethods)->pluck('code')->all();
+        if (! in_array($this->payment_method, $allowedMethods, true)) {
+            $this->addError('payment_method', 'Diese Zahlungsart ist derzeit nicht verfügbar.');
+
+            return null;
+        }
 
         try {
             $order = DB::transaction(function () use ($cartItems) {
@@ -236,42 +253,56 @@ class CheckoutPage extends Component
 
     public function getPaymentMethodsProperty(): array
     {
-        $gateways = PaymentGateway::query()->active()->get(['code', 'name'])->toArray();
-
-        if ((bool) Setting::get('prepayment_enabled', false)) {
-            $gateways[] = ['code' => 'prepayment', 'name' => 'Vorkasse / Überweisung'];
-        }
-
-        $preferred = [
+        $labels = [
+            'sumup' => 'SumUp',
+            'stripe' => 'Stripe Checkout',
             'card' => 'Kreditkarte (Stripe)',
             'klarna' => 'Klarna (Stripe)',
-            'stripe' => 'Stripe Checkout',
             'paypal' => 'PayPal',
-            'sumup' => 'SumUp',
             'prepayment' => 'Vorkasse / Überweisung',
             'invoice' => 'Kauf auf Rechnung',
         ];
 
-        $normalized = [];
-        foreach ($gateways as $gateway) {
-            $code = (string) ($gateway['code'] ?? '');
-            if ($code === '') {
+        $methods = [];
+
+        foreach (PaymentGateway::query()->active()->orderBy('sort_order')->get(['code', 'name']) as $gateway) {
+            $code = strtolower((string) $gateway->code);
+            if ($code === '' || ! $this->isPaymentMethodConfigured($code)) {
                 continue;
             }
 
-            $normalized[$code] = [
+            $methods[$code] = [
                 'code' => $code,
-                'name' => (string) ($gateway['name'] ?? ($preferred[$code] ?? strtoupper($code))),
+                'name' => (string) ($gateway->name ?: ($labels[$code] ?? strtoupper($code))),
             ];
         }
 
-        foreach ($preferred as $code => $label) {
-            if (! isset($normalized[$code])) {
-                $normalized[$code] = ['code' => $code, 'name' => $label];
-            }
+        if ((bool) Setting::get('prepayment_enabled', false)) {
+            $methods['prepayment'] = [
+                'code' => 'prepayment',
+                'name' => 'Vorkasse / Überweisung',
+            ];
         }
 
-        return array_values($normalized);
+        if (! isset($methods['sumup']) && app(PaymentProviderService::class)->isSumUpConfigured()) {
+            $methods['sumup'] = [
+                'code' => 'sumup',
+                'name' => 'SumUp',
+            ];
+        }
+
+        return array_values($methods);
+    }
+
+    protected function isPaymentMethodConfigured(string $code): bool
+    {
+        return match ($code) {
+            'sumup' => app(PaymentProviderService::class)->isSumUpConfigured(),
+            'stripe', 'card', 'klarna' => filled(config('services.stripe.secret')),
+            'paypal' => filled(config('services.paypal.client_id')) && filled(config('services.paypal.secret')),
+            'prepayment', 'invoice' => true,
+            default => false,
+        };
     }
 
     public function formatPrice(float $price): string

@@ -14,6 +14,7 @@ final class PaymentGatewayHealthService
         return match (strtolower($gateway->code)) {
             'stripe' => $this->checkStripe($gateway),
             'paypal' => $this->checkPayPal($gateway),
+            'sumup' => $this->checkSumUp($gateway),
             default => $this->checkGeneric($gateway),
         };
     }
@@ -92,6 +93,40 @@ final class PaymentGatewayHealthService
         }
 
         return new HealthCheckResult(false, 'PayPal: HTTP '.$response->status().' – '.Str::limit((string) $response->body(), 200));
+    }
+
+    private function checkSumUp(PaymentGateway $gateway): HealthCheckResult
+    {
+        $token = trim((string) (
+            $gateway->getConfigValue('api_key')
+            ?? $gateway->getConfigValue('token')
+            ?? config('services.sumup.token')
+            ?? ''
+        ));
+        $merchantCode = trim((string) (
+            $gateway->getConfigValue('merchant_code')
+            ?? config('services.sumup.merchant_code')
+            ?? ''
+        ));
+
+        if ($token === '' || $merchantCode === '') {
+            return new HealthCheckResult(false, 'SumUp: API-Token und Merchant Code werden benötigt.');
+        }
+
+        try {
+            $response = Http::timeout(15)
+                ->withToken($token)
+                ->acceptJson()
+                ->get('https://api.sumup.com/v0.1/me');
+        } catch (ConnectionException $e) {
+            return new HealthCheckResult(false, 'SumUp-Verbindung fehlgeschlagen: '.Str::limit((string) $e->getMessage(), 180));
+        }
+
+        if ($response->successful()) {
+            return new HealthCheckResult(true, 'SumUp API antwortet (Merchant-Profil abrufbar).');
+        }
+
+        return new HealthCheckResult(false, 'SumUp: HTTP '.$response->status().' – '.Str::limit((string) $response->body(), 200));
     }
 
     private function checkGeneric(PaymentGateway $gateway): HealthCheckResult

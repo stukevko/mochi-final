@@ -52,8 +52,45 @@ class PaymentCheckoutController extends Controller
         }
 
         if ($provider === 'sumup') {
-            // SumUp return means the hosted checkout finished. Final confirmation should still come via webhook/polling.
-            // We keep status pending here if no webhook is configured.
+            $checkoutId = (string) $request->query('checkout_id', '');
+            if ($checkoutId === '') {
+                $paymentData = is_array($order->payment_data) ? $order->payment_data : [];
+                $checkoutId = (string) ($paymentData['sumup_checkout_id'] ?? '');
+            }
+
+            if ($checkoutId === '') {
+                return redirect()
+                    ->route('checkout')
+                    ->with('payment_error', 'SumUp-Zahlung konnte nicht bestätigt werden. Bitte erneut versuchen oder uns kontaktieren.');
+            }
+
+            $verification = $providers->verifySumUpCheckout($checkoutId, $order);
+
+            if (! $verification['paid']) {
+                Log::channel('checkout_stack')->warning('payment.return.sumup.not_paid', [
+                    'order_id' => $order->id,
+                    'checkout_id' => $checkoutId,
+                    'status' => $verification['status'],
+                ]);
+
+                return redirect()
+                    ->route('checkout')
+                    ->with('payment_error', 'Die SumUp-Zahlung wurde nicht abgeschlossen. Bitte erneut versuchen.');
+            }
+
+            $completion->markPaidAndNotify(
+                $order,
+                'sumup',
+                $verification['transaction_id'],
+            );
+        }
+
+        $order->refresh();
+
+        if ($provider === 'sumup' && $order->payment_status !== 'paid') {
+            return redirect()
+                ->route('checkout')
+                ->with('payment_error', 'Die SumUp-Zahlung konnte nicht bestätigt werden. Bitte erneut versuchen.');
         }
 
         session()->flash('shop_toast', [

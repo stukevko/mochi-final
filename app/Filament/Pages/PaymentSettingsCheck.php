@@ -32,31 +32,25 @@ class PaymentSettingsCheck extends Page
 
     public function mount(): void
     {
-        $stripeSecret = (string) config('services.stripe.secret', '');
-        $paypalClientId = (string) config('services.paypal.client_id', '');
         $sumupToken = (string) config('services.sumup.token', '');
+        $sumupMerchantCode = (string) config('services.sumup.merchant_code', '');
 
         $this->shopName = (string) Setting::get('shop_name', config('app.name', 'Shop'));
 
         $this->checks = [
             [
-                'provider' => 'Stripe (global auf dem Server)',
-                'configured' => $stripeSecret !== '',
-                'masked' => $this->maskedValue($stripeSecret),
-            ],
-            [
-                'provider' => 'PayPal (global auf dem Server)',
-                'configured' => $paypalClientId !== '',
-                'masked' => $this->maskedValue($paypalClientId),
-            ],
-            [
-                'provider' => 'SumUp (global auf dem Server)',
+                'provider' => 'SumUp Token (.env SUMUP_TOKEN)',
                 'configured' => $sumupToken !== '',
                 'masked' => $this->maskedValue($sumupToken),
             ],
+            [
+                'provider' => 'SumUp Merchant Code (.env SUMUP_MERCHANT_CODE)',
+                'configured' => $sumupMerchantCode !== '',
+                'masked' => $this->maskedValue($sumupMerchantCode),
+            ],
         ];
 
-        $this->showDebugWarning = app()->hasDebugModeEnabled() && str_starts_with($stripeSecret, 'sk_live_');
+        $this->showDebugWarning = app()->hasDebugModeEnabled();
     }
 
     public function getTitle(): string

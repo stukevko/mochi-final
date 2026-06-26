@@ -3,6 +3,7 @@
 namespace App\Services\Payments;
 
 use App\Models\Order;
+use App\Models\PaymentGateway;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Stripe\Exception\InvalidRequestException;
@@ -107,36 +108,141 @@ class PaymentProviderService
         throw new RuntimeException('PayPal Approval-Link fehlt.');
     }
 
-    public function createSumUpCheckoutUrl(Order $order): string
+    /**
+     * @return array{token: string, merchant_code: string}
+     */
+    public function resolveSumUpCredentials(): array
     {
-        $token = (string) config('services.sumup.token');
-        $merchantCode = (string) config('services.sumup.merchant_code');
+        $token = trim((string) config('services.sumup.token'));
+        $merchantCode = trim((string) config('services.sumup.merchant_code'));
 
         if ($token === '' || $merchantCode === '') {
+            $gateway = PaymentGateway::query()
+                ->where('code', 'sumup')
+                ->first();
+
+            if ($gateway) {
+                if ($token === '') {
+                    $token = trim((string) (
+                        $gateway->getConfigValue('api_key')
+                        ?? $gateway->getConfigValue('token')
+                        ?? ''
+                    ));
+                }
+
+                if ($merchantCode === '') {
+                    $merchantCode = trim((string) $gateway->getConfigValue('merchant_code'));
+                }
+            }
+        }
+
+        return [
+            'token' => $token,
+            'merchant_code' => $merchantCode,
+        ];
+    }
+
+    public function isSumUpConfigured(): bool
+    {
+        $credentials = $this->resolveSumUpCredentials();
+
+        return $credentials['token'] !== '' && $credentials['merchant_code'] !== '';
+    }
+
+    public function createSumUpCheckoutUrl(Order $order): string
+    {
+        $credentials = $this->resolveSumUpCredentials();
+
+        if ($credentials['token'] === '' || $credentials['merchant_code'] === '') {
             throw new RuntimeException('SumUp ist nicht konfiguriert (SUMUP_TOKEN / SUMUP_MERCHANT_CODE fehlen).');
         }
 
-        $response = Http::withToken($token)
+        $response = Http::withToken($credentials['token'])
             ->acceptJson()
             ->post('https://api.sumup.com/v0.1/checkouts', [
                 'checkout_reference' => (string) $order->order_number,
                 'amount' => round((float) $order->total, 2),
                 'currency' => strtoupper((string) ($order->currency ?: 'EUR')),
-                'merchant_code' => $merchantCode,
+                'merchant_code' => $credentials['merchant_code'],
                 'description' => 'Bestellung '.$order->order_number,
                 'return_url' => route('payment.return', ['provider' => 'sumup', 'order' => $order->id]),
+                'hosted_checkout' => ['enabled' => true],
             ]);
 
         if (! $response->successful()) {
             throw new RuntimeException('SumUp Checkout konnte nicht initialisiert werden.');
         }
 
-        $url = $response->json('checkout_url');
+        $checkoutId = (string) ($response->json('id') ?? '');
+        $url = $response->json('hosted_checkout_url') ?? $response->json('checkout_url');
+
+        if ($checkoutId !== '') {
+            $paymentData = is_array($order->payment_data) ? $order->payment_data : [];
+            $paymentData['sumup_checkout_id'] = $checkoutId;
+            $order->forceFill(['payment_data' => $paymentData])->save();
+        }
+
         if (! is_string($url) || $url === '') {
             throw new RuntimeException('SumUp Checkout URL fehlt.');
         }
 
         return $url;
+    }
+
+    /**
+     * @return array{paid: bool, transaction_id: string|null, status: string|null}
+     */
+    public function verifySumUpCheckout(string $checkoutId, Order $order): array
+    {
+        $credentials = $this->resolveSumUpCredentials();
+
+        if ($credentials['token'] === '') {
+            return ['paid' => false, 'transaction_id' => null, 'status' => null];
+        }
+
+        $response = Http::withToken($credentials['token'])
+            ->acceptJson()
+            ->get('https://api.sumup.com/v0.1/checkouts/'.urlencode($checkoutId));
+
+        if (! $response->successful()) {
+            return ['paid' => false, 'transaction_id' => null, 'status' => null];
+        }
+
+        $reference = (string) ($response->json('checkout_reference') ?? '');
+        if ($reference !== '' && $reference !== (string) $order->order_number) {
+            return ['paid' => false, 'transaction_id' => null, 'status' => (string) ($response->json('status') ?? null)];
+        }
+
+        $status = strtoupper((string) ($response->json('status') ?? ''));
+        $transactionId = (string) (
+            $response->json('transaction_id')
+            ?? data_get($response->json(), 'transactions.0.id')
+            ?? data_get($response->json(), 'transactions.0.transaction_id')
+            ?? ''
+        );
+
+        $paid = in_array($status, ['PAID', 'SUCCESSFUL', 'SUCCESS'], true);
+        if (! $paid) {
+            $transactions = $response->json('transactions', []);
+            if (is_array($transactions)) {
+                foreach ($transactions as $transaction) {
+                    $txStatus = strtoupper((string) (is_array($transaction) ? ($transaction['status'] ?? '') : ''));
+                    if (in_array($txStatus, ['SUCCESSFUL', 'SUCCESS', 'PAID'], true)) {
+                        $paid = true;
+                        $transactionId = $transactionId !== ''
+                            ? $transactionId
+                            : (string) (is_array($transaction) ? ($transaction['id'] ?? $transaction['transaction_id'] ?? '') : '');
+                        break;
+                    }
+                }
+            }
+        }
+
+        return [
+            'paid' => $paid,
+            'transaction_id' => $transactionId !== '' ? $transactionId : ($paid ? $checkoutId : null),
+            'status' => $status !== '' ? $status : null,
+        ];
     }
 
     public function capturePayPalOrder(string $paypalOrderId): ?string

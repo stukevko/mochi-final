@@ -29,7 +29,7 @@
 
     <h1 class="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Checkout</h1>
     <p class="mt-2 max-w-2xl text-sm text-mochi-muted">
-        Prüfe deine Angaben und schließe die Bestellung ab. Je nach Zahlungsart wirst du sicher zu Stripe, PayPal oder SumUp weitergeleitet.
+        Prüfe deine Angaben und schließe die Bestellung ab. Die Zahlung erfolgt sicher über SumUp.
     </p>
 
     @if ($errors->has('cart'))
@@ -189,20 +189,9 @@
 
             <section class="mochi-card rounded-2xl border border-white/10 bg-[#080c12]/40 p-6 backdrop-blur-xl sm:p-8">
                 <h2 class="text-lg font-semibold text-white">Zahlungsart</h2>
-                <p class="mt-1 text-sm text-mochi-muted">Wähle deinen bevorzugten Zahlungsanbieter.</p>
+                <p class="mt-1 text-sm text-mochi-muted">Online-Zahlung über SumUp — dieselbe Abrechnung wie an der Ladentheke.</p>
                 <div class="mt-6 space-y-3">
-                    @php
-                        $paymentLogos = [
-                            'stripe' => ['label' => 'Stripe', 'bg' => 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/25'],
-                            'card' => ['label' => 'Card', 'bg' => 'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/25'],
-                            'klarna' => ['label' => 'Klarna', 'bg' => 'bg-pink-500/15 text-pink-200 ring-1 ring-pink-400/25'],
-                            'paypal' => ['label' => 'PayPal', 'bg' => 'bg-blue-500/15 text-blue-200 ring-1 ring-blue-400/25'],
-                            'sumup' => ['label' => 'SumUp', 'bg' => 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/25'],
-                            'prepayment' => 'Bank',
-                            'invoice' => 'Rechnung',
-                        ];
-                    @endphp
-                    @foreach ($this->paymentMethods as $method)
+                    @forelse ($this->paymentMethods as $method)
                         <label
                             class="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-mochi-accent/30 has-[:checked]:border-mochi-accent/45 has-[:checked]:bg-mochi-accent/10"
                         >
@@ -215,14 +204,18 @@
                             <span class="flex w-full items-center justify-between gap-3">
                                 <span class="text-sm font-medium text-mochi-text">{{ $method['name'] }}</span>
                                 <span
-                                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide {{ data_get($paymentLogos, $method['code'].'.bg', 'bg-white/10 text-mochi-muted ring-1 ring-white/15') }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-200 ring-1 ring-emerald-400/25"
                                 >
                                     <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
-                                    {{ data_get($paymentLogos, $method['code'].'.label', strtoupper($method['code'])) }}
+                                    {{ $method['code'] === 'sumup' ? 'SumUp' : strtoupper($method['code']) }}
                                 </span>
                             </span>
                         </label>
-                    @endforeach
+                    @empty
+                        <div class="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
+                            Online-Zahlung ist noch nicht eingerichtet. Bitte kontaktiere den Laden.
+                        </div>
+                    @endforelse
                 </div>
                 @error('payment_method')
                     <p class="mt-3 text-sm text-red-300">{{ $message }}</p>

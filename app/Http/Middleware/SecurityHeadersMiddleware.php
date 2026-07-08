@@ -26,9 +26,10 @@ class SecurityHeadersMiddleware
         if (app()->environment('production')) {
             $viteDev = $this->viteDevelopmentOrigin();
 
-            $scriptSrc = ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'blob:'];
-            $styleSrc = ["'self'", "'unsafe-inline'", 'https:', 'https://fonts.bunny.net'];
+            $scriptSrc = ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'blob:', 'https://challenges.cloudflare.com'];
+            $styleSrc = ["'self'", "'unsafe-inline'", 'https:', 'https://fonts.bunny.net', 'https://fonts.googleapis.com'];
             $connectSrc = ["'self'", 'https:', 'ws:', 'wss:'];
+            $frameSrc = ["'self'", 'https://www.google.com', 'https://maps.google.com', 'https://challenges.cloudflare.com'];
 
             if ($viteDev !== null) {
                 $scriptSrc[] = $viteDev;
@@ -46,6 +47,7 @@ class SecurityHeadersMiddleware
                 'connect-src '.implode(' ', $connectSrc),
                 'script-src '.implode(' ', $scriptSrc),
                 'style-src '.implode(' ', $styleSrc),
+                'frame-src '.implode(' ', $frameSrc),
             ];
             if ($request->secure()) {
                 $csp[] = 'upgrade-insecure-requests';

@@ -12,11 +12,7 @@
         <title>@yield('title', config('mochicards.site_name'))</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml" sizes="any">
         @stack('meta')
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link
-            href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|inter:400,500,600,700"
-            rel="stylesheet"
-        >
+        @include('partials.consent-config', ['consentLayout' => 'storefront'])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
         @stack('head')
@@ -42,9 +38,16 @@
                     <div class="relative flex min-w-0 flex-1 items-center justify-center md:flex-none md:justify-start">
                         <a
                             href="{{ route('home') }}"
-                            class="mochi-brand-wordmark max-w-[calc(100%-6.75rem)] truncate text-center text-lg font-extrabold tracking-tight text-white transition hover:text-[#ff9a4d] md:max-w-none md:text-left"
+                            class="mochi-brand-link inline-flex max-w-[calc(100%-6.75rem)] items-center justify-center md:max-w-none md:justify-start"
+                            aria-label="{{ $shopDisplayName ?? $siteName }}"
                         >
-                            Mochi Cards
+                            <img
+                                src="{{ $shopLogoUrl ?? asset('images/mochi-logo-placeholder.png') }}"
+                                alt="{{ $shopDisplayName ?? $siteName }}"
+                                class="h-9 w-auto max-w-[11rem] object-contain sm:h-10 {{ ($shopLogoIsPlaceholder ?? true) ? 'opacity-95' : '' }}"
+                                width="176"
+                                height="40"
+                            >
                         </a>
                         <a
                             href="{{ route('shop') }}"
@@ -149,6 +152,13 @@
                                 @foreach ($footerLegalLinks as $link)
                                     <a href="{{ $link['url'] }}" class="transition hover:text-mochi-text">{{ $link['label'] }}</a>
                                 @endforeach
+                                <button
+                                    type="button"
+                                    onclick="window.openCookieSettings?.()"
+                                    class="transition hover:text-mochi-text"
+                                >
+                                    Cookies
+                                </button>
                             </div>
                             <div class="inline-flex shrink-0 items-center justify-center sm:justify-start">
                                 @include('partials.social-icons')
@@ -195,7 +205,7 @@
                 </button>
             </div>
             <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-                <livewire:shop.cart-drawer />
+                <livewire:shop.cart-drawer lazy />
             </div>
         </aside>
 
@@ -213,6 +223,7 @@
         </div>
 
         @stack('scripts')
+        @include('partials.cookie-consent')
         @livewireScripts
     </body>
 </html>

@@ -36,6 +36,7 @@ class CheckoutPage extends Component
     public string $country = 'DE';
     public string $notes = '';
     public string $payment_method = 'sumup';
+    public bool $accepted_legal = false;
 
     public function mount(): void
     {
@@ -69,6 +70,7 @@ class CheckoutPage extends Component
             'country' => 'required|string|size:2',
             'notes' => 'nullable|string|max:2000',
             'payment_method' => 'required|string|max:50',
+            'accepted_legal' => 'accepted',
         ]);
 
         // Preise kommen ausschließlich aus getContent() → Datenbank; keine Request-/Session-Preise vertrauen.
@@ -121,6 +123,7 @@ class CheckoutPage extends Component
                     'shipping_address' => $this->addressPayload(),
                     'notes' => $this->notes ?: null,
                     'currency' => (string) Setting::get('currency', 'EUR'),
+                    'terms_accepted_at' => now(),
                 ])->save();
                 $order->refresh();
 
@@ -130,11 +133,13 @@ class CheckoutPage extends Component
                     $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : null;
 
                     /** @var Product|null $product */
-                    $product = Product::query()->where('is_active', true)->find($productId);
+                    $product = Product::query()->where('is_active', true)->lockForUpdate()->find($productId);
                     /** @var ProductVariant|null $variant */
                     $variant = $variantId
                         ? ProductVariant::query()
                             ->where('is_active', true)
+                            ->where('product_id', $productId)
+                            ->lockForUpdate()
                             ->with('attributeValues.attribute')
                             ->find($variantId)
                         : null;

@@ -18,6 +18,9 @@
         @elseif($this->currentCategory?->description)
             <p class="mt-2 text-sm text-mochi-muted">{{ $this->currentCategory->description }}</p>
         @endif
+        <div class="mt-2">
+            @include('partials.price-legal-hint', ['compact' => true])
+        </div>
     </div>
 
     <div class="lg:grid lg:grid-cols-4 lg:gap-8">

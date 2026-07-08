@@ -81,7 +81,7 @@ Route::get('/kontakt', function () {
 })->name('contact');
 
 Route::get('/api/address-suggest', AddressSuggestController::class)
-    ->middleware('throttle:45,1')
+    ->middleware('throttle:15,1')
     ->name('api.address-suggest');
 
 Route::view('/impressum', 'pages.legal-impressum')->name('legal.impressum');
@@ -89,7 +89,7 @@ Route::view('/agb', 'pages.legal-agb')->name('legal.agb');
 Route::view('/datenschutz', 'pages.legal-datenschutz')->name('legal.datenschutz');
 Route::view('/widerruf', 'pages.legal-widerruf')->name('legal.widerruf');
 
-Route::middleware(['web', 'auth'])->group(function (): void {
+Route::middleware(['web', 'auth', 'admin'])->group(function (): void {
     Route::post('admin-calendar/events/{id}/reschedule', EventCalendarRescheduleController::class)
         ->name('admin.calendar.event-reschedule');
 });

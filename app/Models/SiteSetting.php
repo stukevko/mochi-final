@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\BenefitTileIcons;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class SiteSetting extends Model
 {
@@ -58,11 +59,26 @@ class SiteSetting extends Model
 
     public static function current(): self
     {
-        return static::query()->first()
-            ?? static::query()->create([
-                'instagram_url' => config('mochicards.instagram_url'),
-                'background_animations' => true,
-            ]);
+        return Cache::rememberForever('site_setting.current.v1', function (): self {
+            return static::query()->first()
+                ?? static::query()->create([
+                    'instagram_url' => config('mochicards.instagram_url'),
+                    'background_animations' => true,
+                ]);
+        });
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            Cache::forget('site_setting.current.v1');
+            \App\Support\StorefrontLayoutCache::forget();
+        });
+
+        static::deleted(function (): void {
+            Cache::forget('site_setting.current.v1');
+            \App\Support\StorefrontLayoutCache::forget();
+        });
     }
 
     /**

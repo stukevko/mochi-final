@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Support\ProductImageUrl;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 
 class CartService
@@ -18,7 +19,7 @@ class CartService
      */
     public function getRawLines(): array
     {
-        return $this->migrateAndPersist(Session::get(self::SESSION_KEY, []));
+        return $this->normalizeCart(Session::get(self::SESSION_KEY, []));
     }
 
     /**
@@ -38,14 +39,38 @@ class CartService
      */
     public function getContent(): array
     {
+        $rawLines = $this->getRawLines();
+        if ($rawLines === []) {
+            return [];
+        }
+
+        $productIds = collect($rawLines)->pluck('product_id')->map(fn ($id) => (int) $id)->filter(fn (int $id) => $id > 0)->unique()->values();
+        $variantIds = collect($rawLines)->pluck('variant_id')->filter(fn ($id) => $id !== null && $id !== '')->map(fn ($id) => (int) $id)->unique()->values();
+
+        $products = Product::query()
+            ->where('is_active', true)
+            ->whereIn('id', $productIds)
+            ->get()
+            ->keyBy('id');
+
+        $variants = $variantIds->isEmpty()
+            ? collect()
+            : ProductVariant::query()
+                ->where('is_active', true)
+                ->whereIn('id', $variantIds)
+                ->with('attributeValues')
+                ->get()
+                ->keyBy('id');
+
         $resolved = [];
         $persist = [];
 
-        foreach ($this->getRawLines() as $line) {
-            $row = $this->resolveLine($line);
+        foreach ($rawLines as $line) {
+            $row = $this->resolveLine($line, $products, $variants);
             if ($row === null) {
                 continue;
             }
+
             $key = $this->makeKey($row);
             $resolved[$key] = $row;
             $persist[$key] = [
@@ -55,7 +80,7 @@ class CartService
             ];
         }
 
-        $this->replaceCart($persist);
+        $this->persistIfChanged($persist);
 
         return $resolved;
     }
@@ -176,10 +201,15 @@ class CartService
 
     /**
      * @param  array<string, mixed>  $line
+     * @param  Collection<int, Product>|null  $products
+     * @param  Collection<int, ProductVariant>|null  $variants
      * @return array<string, mixed>|null
      */
-    protected function resolveLine(array $line): ?array
-    {
+    protected function resolveLine(
+        array $line,
+        ?Collection $products = null,
+        ?Collection $variants = null,
+    ): ?array {
         $productId = (int) ($line['product_id'] ?? 0);
         $variantId = isset($line['variant_id']) ? (int) $line['variant_id'] : null;
         $quantity = max(1, (int) ($line['quantity'] ?? 1));
@@ -188,9 +218,8 @@ class CartService
             return null;
         }
 
-        $product = Product::query()
-            ->where('is_active', true)
-            ->find($productId);
+        $product = $products?->get($productId)
+            ?? Product::query()->where('is_active', true)->find($productId);
 
         if (! $product) {
             return null;
@@ -198,11 +227,12 @@ class CartService
 
         $variant = null;
         if ($variantId !== null) {
-            $variant = ProductVariant::query()
-                ->where('product_id', $productId)
-                ->where('is_active', true)
-                ->with('attributeValues')
-                ->find($variantId);
+            $variant = $variants?->get($variantId)
+                ?? ProductVariant::query()
+                    ->where('product_id', $productId)
+                    ->where('is_active', true)
+                    ->with('attributeValues')
+                    ->find($variantId);
 
             if (! $variant) {
                 return null;
@@ -244,7 +274,7 @@ class CartService
      * @param  array<string, array<string, mixed>>  $cart
      * @return array<string, array{product_id: int, variant_id: ?int, quantity: int}>
      */
-    protected function migrateAndPersist(array $cart): array
+    protected function normalizeCart(array $cart): array
     {
         $migrated = [];
         foreach ($cart as $line) {
@@ -271,9 +301,20 @@ class CartService
             }
         }
 
-        Session::put(self::SESSION_KEY, $migrated);
-
         return $migrated;
+    }
+
+    /**
+     * @param  array<string, array{product_id: int, variant_id: ?int, quantity: int}>  $cart
+     */
+    protected function persistIfChanged(array $cart): void
+    {
+        $current = Session::get(self::SESSION_KEY, []);
+        if ($current === $cart) {
+            return;
+        }
+
+        Session::put(self::SESSION_KEY, $cart);
     }
 
     /**

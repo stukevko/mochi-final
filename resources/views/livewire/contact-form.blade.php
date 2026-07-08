@@ -83,6 +83,12 @@
                 @error('turnstileToken') <p class="text-xs text-rose-300">{{ $message }}</p> @enderror
             @endif
 
+            <p class="text-xs leading-relaxed text-mochi-muted">
+                Mit dem Absenden verarbeiten wir deine Angaben zur Beantwortung deiner Anfrage.
+                Details in der
+                <a href="{{ route('legal.datenschutz') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-mochi-coral underline-offset-2 hover:underline">Datenschutzerklärung</a>.
+            </p>
+
             <button
                 type="submit"
                 class="mochi-cta w-full !min-h-12 !text-sm disabled:cursor-not-allowed disabled:opacity-60"

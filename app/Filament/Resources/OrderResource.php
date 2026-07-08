@@ -558,6 +558,7 @@ class OrderResource extends Resource
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
                     ->action(function ($record) {
+                        $record->loadMissing('items');
                         $pdf = Pdf::loadView('pdf.invoice', ['order' => $record]);
 
                         return response()->streamDownload(

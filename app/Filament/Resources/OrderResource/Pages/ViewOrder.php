@@ -86,6 +86,7 @@ class ViewOrder extends ViewRecord
                 ->icon('heroicon-o-document-arrow-down')
                 ->action(function () {
                     $record = $this->getRecord();
+                    $record->loadMissing('items');
                     $pdf = Pdf::loadView('pdf.invoice', ['order' => $record]);
 
                     return response()->streamDownload(

@@ -80,20 +80,20 @@ class PresentationSeeder extends Seeder
     private function seedSiteSettings(): void
     {
         $settings = SiteSetting::current();
-        $shopUrl = 'https://www.cardmarket.com/de/Pokemon';
+        $shopUrl = '/shop';
 
         $featuredPath = is_file(public_path('images/presentation/featured-product.jpg'))
             ? 'images/presentation/featured-product.jpg'
             : null;
 
         $settings->fill([
-            'hero_headline' => 'DEIN WOHNZIMMER FÜR TCG IN SPEYER',
+            'hero_headline' => 'Dein TCG WOHNZIMMER IN Speyer',
             'shop_cta_url' => $shopUrl,
-            'featured_product_id' => 'BESTSELLER-151-2024',
-            'featured_product_title' => 'Pokémon TCG: «Scarlet & Violet — 151» Booster-Bundle',
-            'featured_product_description' => 'Beliebter Klassiker-Block mit starternahen Hits — perfekt zum Öffnen am Tisch oder für eure Sammlung. Hochwertige Kartenoptik, frisch eingetroffen.',
-            'featured_product_price' => '119,99 €',
-            'featured_product_url' => $shopUrl,
+            'featured_product_id' => null,
+            'featured_product_title' => 'Frisch im Shop: TCG-Neuheiten & Beliebtes',
+            'featured_product_description' => 'Booster, Displays und Zubehör für Pokémon, Magic, Yu-Gi-Oh! und mehr — direkt aus unserem Laden in Speyer.',
+            'featured_product_price' => null,
+            'featured_product_url' => null,
             'featured_product_image_path' => $featuredPath,
             'background_animations' => true,
             'benefit_1_title' => 'Blitzversand',
@@ -105,8 +105,8 @@ class PresentationSeeder extends Seeder
             'benefit_3_title' => 'Turniere',
             'benefit_3_body' => 'Wöchentliche Locals & Cups',
             'benefit_3_icon' => 'trophy',
-            'benefit_4_title' => 'Safe Pay',
-            'benefit_4_body' => 'SSL-verschlüsselt & Käuferschutz',
+            'benefit_4_title' => 'SumUp',
+            'benefit_4_body' => 'Sicher online & im Laden bezahlen',
             'benefit_4_icon' => 'lock',
         ]);
         $settings->save();
@@ -118,7 +118,7 @@ class PresentationSeeder extends Seeder
         if ($link) {
             $link->update([
                 'label' => 'Zum Online-Shop',
-                'url' => 'https://www.cardmarket.com/de/Pokemon',
+                'url' => '/shop',
             ]);
         }
     }

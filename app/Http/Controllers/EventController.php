@@ -59,9 +59,14 @@ class EventController extends Controller
     public function index(Request $request): View
     {
         $gameFilter = $request->query('game');
+        $showPast = $request->boolean('past');
 
         $events = Event::query()
             ->active()
+            ->when(
+                ! $showPast,
+                fn ($q) => $q->where('starts_at', '>=', now()->startOfDay()),
+            )
             ->when(
                 $gameFilter !== null && $gameFilter !== '' && GameType::tryFrom((string) $gameFilter),
                 fn ($q) => $q->where('game_type', $gameFilter),
@@ -74,6 +79,7 @@ class EventController extends Controller
             'events' => $events,
             'gameTypes' => GameType::casesForSelect(),
             'activeGame' => $gameFilter,
+            'showPast' => $showPast,
         ]);
     }
 

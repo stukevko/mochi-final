@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\Payments\PaymentCompletionService;
+use App\Support\PaymentOrderVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -39,13 +40,13 @@ class PaymentWebhookController extends Controller
         $loggedOrderId = null;
 
         if ($type === 'checkout.session.completed') {
-            $session = (array) $event->data->object;
-            $orderId = (int) (($session['metadata']['order_id'] ?? $session['client_reference_id'] ?? 0));
-            $paymentIntent = (string) ($session['payment_intent'] ?? '');
+            $sessionPayload = (array) $event->data->object;
+            $orderId = (int) (($sessionPayload['metadata']['order_id'] ?? $sessionPayload['client_reference_id'] ?? 0));
+            $paymentIntent = (string) ($sessionPayload['payment_intent'] ?? '');
             $loggedOrderId = $orderId > 0 ? $orderId : null;
 
             $order = Order::query()->find($orderId);
-            if ($order) {
+            if ($order && $this->verifyStripeSessionPayload($sessionPayload, $order)) {
                 $completion->markPaidAndNotify($order, 'stripe', $paymentIntent !== '' ? $paymentIntent : null);
             }
         }
@@ -57,7 +58,7 @@ class PaymentWebhookController extends Controller
             $loggedOrderId = $orderId > 0 ? $orderId : null;
 
             $order = Order::query()->find($orderId);
-            if ($order) {
+            if ($order && $this->verifyStripeIntentPayload($intent, $order)) {
                 $completion->markPaidAndNotify($order, 'stripe', $intentId !== '' ? $intentId : null);
             }
         }
@@ -87,7 +88,7 @@ class PaymentWebhookController extends Controller
             $externalId = (string) (data_get($resource, 'id') ?? '');
 
             $order = Order::query()->find($orderId);
-            if ($order) {
+            if ($order && PaymentOrderVerifier::verifyPayPalWebhookResource($resource, $order)) {
                 $completion->markPaidAndNotify($order, 'paypal', $externalId !== '' ? $externalId : null);
             }
 
@@ -148,5 +149,55 @@ class PaymentWebhookController extends Controller
             ]);
 
         return $verification->successful() && (string) $verification->json('verification_status') === 'SUCCESS';
+    }
+
+    /**
+     * @param  array<string, mixed>  $sessionPayload
+     */
+    private function verifyStripeSessionPayload(array $sessionPayload, Order $order): bool
+    {
+        if ((string) ($sessionPayload['payment_status'] ?? '') !== 'paid') {
+            return false;
+        }
+
+        $metadataOrderId = (int) ($sessionPayload['metadata']['order_id'] ?? 0);
+        if ($metadataOrderId !== (int) $order->id) {
+            return false;
+        }
+
+        $amountTotal = (int) ($sessionPayload['amount_total'] ?? 0);
+        $expectedCents = (int) round((float) $order->total * 100);
+
+        if ($amountTotal !== $expectedCents) {
+            return false;
+        }
+
+        $currency = strtoupper((string) ($sessionPayload['currency'] ?? ''));
+
+        return PaymentOrderVerifier::amountsMatch($order, (float) $order->total, $currency);
+    }
+
+    /**
+     * @param  array<string, mixed>  $intent
+     */
+    private function verifyStripeIntentPayload(array $intent, Order $order): bool
+    {
+        $metadataOrderId = (int) ($intent['metadata']['order_id'] ?? 0);
+        if ($metadataOrderId !== (int) $order->id) {
+            return false;
+        }
+
+        $amount = (int) ($intent['amount'] ?? 0);
+        $expectedCents = (int) round((float) $order->total * 100);
+
+        if ($amount !== $expectedCents) {
+            return false;
+        }
+
+        return PaymentOrderVerifier::amountsMatch(
+            $order,
+            (float) $order->total,
+            (string) ($intent['currency'] ?? 'eur'),
+        );
     }
 }

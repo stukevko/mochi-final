@@ -90,7 +90,7 @@ class ManageBrandingDesign extends Page
                             ->options(array_combine(ShopTypography::selectOptions(), ShopTypography::selectOptions()))
                             ->native(false)
                             ->required()
-                            ->helperText('Wird aus Google Fonts eingebunden (Gewichte 400–700). Gilt nur für den öffentlichen Shop.'),
+                            ->helperText('Schrift aus dem lokal gehosteten Katalog (self-hosted, DSGVO-freundlich). Gilt für den öffentlichen Shop.'),
                     ])
                     ->columns(1),
 
@@ -104,7 +104,7 @@ class ManageBrandingDesign extends Page
                             ->directory('settings')
                             ->disk('public')
                             ->visibility('public')
-                            ->helperText('Empfohlen: PNG oder SVG mit transparentem Hintergrund, max. ca. 800 px Breite.'),
+                            ->helperText('Empfohlen: PNG mit transparentem Hintergrund, max. ca. 800 px Breite. Bis das finale Logo vorliegt, wird automatisch public/images/mochi-logo-placeholder.png angezeigt.'),
                         Forms\Components\FileUpload::make('favicon_path')
                             ->label('Favicon')
                             ->image()

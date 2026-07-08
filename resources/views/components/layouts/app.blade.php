@@ -57,9 +57,7 @@
         <meta name="twitter:image" content="{{ $ogImage }}">
     @endif
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="{{ $shopGoogleFontHref ?? 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' }}" rel="stylesheet">
+    @include('partials.consent-config', ['consentLayout' => 'shop'])
 
     <!-- Styles & Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -91,14 +89,16 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 items-center justify-between">
                 <!-- Logo -->
-                <a href="{{ url('/') }}" wire:navigate.hover class="flex items-center gap-2">
-                    @if(!empty($shopLogoUrl))
-                        <img src="{{ $shopLogoUrl }}" alt="" class="h-8 max-w-[140px] object-contain" width="140" height="32" decoding="async" fetchpriority="low" />
-                    @else
-                        <div class="nav-brand-box flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-sm">
-                            {{ strtoupper(\Illuminate\Support\Str::substr($shopDisplayName ?? config('app.name'), 0, 1)) }}
-                        </div>
-                    @endif
+                <a href="{{ url('/') }}" wire:navigate.hover class="flex items-center gap-2.5">
+                    <img
+                        src="{{ $shopLogoUrl ?? asset('images/mochi-logo-placeholder.png') }}"
+                        alt="{{ $shopDisplayName ?? config('app.name') }}"
+                        class="h-8 max-w-[140px] object-contain {{ ($shopLogoIsPlaceholder ?? true) ? 'opacity-95' : '' }}"
+                        width="140"
+                        height="32"
+                        decoding="async"
+                        fetchpriority="low"
+                    />
                     <span class="text-lg font-semibold tracking-tight text-white">{{ $shopDisplayName ?? config('app.name') }}</span>
                 </a>
 
@@ -208,8 +208,7 @@
                     <div class="mt-5 flex flex-wrap items-center gap-2 text-mochi-muted">
                         <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px]">VISA</span>
                         <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px]">Mastercard</span>
-                        <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px]">PayPal</span>
-                        <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px]">Klarna</span>
+                        <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px]">SumUp</span>
                     </div>
                 </div>
 
@@ -230,6 +229,15 @@
                         <li><a href="{{ route('legal.datenschutz') }}" wire:navigate class="text-sm text-mochi-muted transition hover:text-white">Datenschutz</a></li>
                         <li><a href="{{ route('legal.agb') }}" wire:navigate class="text-sm text-mochi-muted transition hover:text-white">AGB</a></li>
                         <li><a href="{{ route('legal.widerruf') }}" wire:navigate class="text-sm text-mochi-muted transition hover:text-white">Widerruf</a></li>
+                        <li>
+                            <button
+                                type="button"
+                                onclick="window.openCookieSettings?.()"
+                                class="text-sm text-mochi-muted transition hover:text-white"
+                            >
+                                Cookies
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
@@ -338,5 +346,6 @@
     @endSession
 
     @livewireScripts
+    @include('partials.cookie-consent')
 </body>
 </html>

@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Setting;
+use App\Support\ShopViewIntegrity;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +22,19 @@ class ShopGoLiveCheckCommand extends Command
         $envOk = ! $appDebug;
         $rows[] = $this->row('Environment', 'APP_DEBUG=false', $envOk, $envOk ? 'OK' : 'APP_DEBUG ist true');
         $allOk = $allOk && $envOk;
+
+        $secureCookie = (bool) config('session.secure', false);
+        $secureOk = ! app()->environment('production') || $secureCookie;
+        $rows[] = $this->row('Security', 'SESSION_SECURE_COOKIE in Production', $secureOk, $secureOk ? 'OK' : 'Secure Cookies fehlen');
+        $allOk = $allOk && $secureOk;
+
+        $turnstileOk = ! app()->environment('production') || \App\Services\TurnstileVerifier::secretConfigured();
+        $rows[] = $this->row('Security', 'Turnstile in Production', $turnstileOk, $turnstileOk ? 'OK' : 'TURNSTILE_SECRET_KEY fehlt');
+        $allOk = $allOk && $turnstileOk;
+
+        $legalOk = $this->checkLegalTexts();
+        $rows[] = $this->row('Legal', 'Rechtstexte ohne Platzhalter', $legalOk['ok'], $legalOk['detail']);
+        $allOk = $allOk && $legalOk['ok'];
 
         $sumupToken = (string) config('services.sumup.token', '');
         $sumupMerchantCode = (string) config('services.sumup.merchant_code', '');
@@ -48,6 +63,24 @@ class ShopGoLiveCheckCommand extends Command
         $storageOk = is_link($storagePath) || is_dir($storagePath);
         $rows[] = $this->row('Storage', 'public/storage vorhanden', $storageOk, $storageOk ? $storagePath : 'storage:link fehlt');
         $allOk = $allOk && $storageOk;
+
+        $viewsOk = ShopViewIntegrity::allPass();
+        $missingViews = collect(ShopViewIntegrity::checkBladeViews())
+            ->filter(fn (array $row): bool => ! $row['ok'])
+            ->pluck('view')
+            ->all();
+        $renderFails = collect(ShopViewIntegrity::checkRenderableSurfaces())
+            ->filter(fn (array $row): bool => ! $row['ok'])
+            ->pluck('surface')
+            ->all();
+        $viewDetail = $viewsOk
+            ? 'shop:check-views OK'
+            : trim(
+                ($missingViews !== [] ? 'fehlend: '.implode(', ', $missingViews) : '')
+                .($renderFails !== [] ? ' render: '.implode(', ', $renderFails) : '')
+            );
+        $rows[] = $this->row('Views', 'Kritische Templates/PDFs/Mails', $viewsOk, $viewDetail !== '' ? $viewDetail : 'FAIL');
+        $allOk = $allOk && $viewsOk;
 
         $this->newLine();
         $this->table(['Bereich', 'Check', 'Status', 'Details'], $rows);
@@ -99,5 +132,36 @@ class ShopGoLiveCheckCommand extends Command
     private function row(string $area, string $check, bool $ok, string $detail): array
     {
         return [$area, $check, $ok ? 'PASS' : 'FAIL', $detail];
+    }
+
+    /**
+     * @return array{ok: bool, detail: string}
+     */
+    private function checkLegalTexts(): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('settings')) {
+            return ['ok' => false, 'detail' => 'Settings-Tabelle fehlt'];
+        }
+
+        $missing = [];
+        foreach (['legal_impressum', 'legal_agb', 'legal_privacy', 'legal_widerruf'] as $key) {
+            $html = strip_tags((string) (Setting::get($key) ?? ''));
+            if ($html === '' || str_contains($html, 'Anwalt') || str_contains($html, 'Platzhalter')) {
+                $missing[] = str_replace('legal_', '', $key);
+            }
+        }
+
+        if ($missing === [] && \Illuminate\Support\Facades\Schema::hasTable('cms_pages')) {
+            return ['ok' => true, 'detail' => 'Rechtstexte in Settings gepflegt'];
+        }
+
+        if ($missing !== []) {
+            return [
+                'ok' => false,
+                'detail' => 'Admin → Rechtstexte: '.implode(', ', $missing),
+            ];
+        }
+
+        return ['ok' => true, 'detail' => 'CMS-Fallback vorhanden'];
     }
 }

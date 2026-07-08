@@ -3,7 +3,7 @@
 namespace App\Support;
 
 /**
- * Erlaubte Schriften für Admin + Google Fonts CSS2-URL (nur Allowlist — kein freies URL-Injection).
+ * Erlaubte Schriften für Admin + Shop (self-hosted via @fontsource in resources/css/fonts.css).
  */
 final class ShopTypography
 {

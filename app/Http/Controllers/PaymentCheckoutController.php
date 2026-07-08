@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Services\Payments\PaymentCompletionService;
 use App\Services\Payments\PaymentProviderService;
+use App\Support\PaymentOrderVerifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +24,9 @@ class PaymentCheckoutController extends Controller
                 try {
                     $client = new StripeClient($secret);
                     $session = $client->checkout->sessions->retrieve($sessionId, []);
-
-                    $isPaid = (string) ($session->payment_status ?? '') === 'paid';
-                    $metadataOrderId = (int) (($session->metadata->order_id ?? 0));
                     $paymentIntent = (string) ($session->payment_intent ?? '');
 
-                    if ($isPaid && $metadataOrderId === (int) $order->id) {
+                    if (PaymentOrderVerifier::verifyStripeSession($session, $order)) {
                         $completion->markPaidAndNotify($order, 'stripe', $paymentIntent !== '' ? $paymentIntent : null);
                     }
                 } catch (Throwable $e) {
@@ -44,9 +42,9 @@ class PaymentCheckoutController extends Controller
         if ($provider === 'paypal') {
             $paypalOrderId = (string) $request->query('token', '');
             if ($paypalOrderId !== '') {
-                $capturedId = $providers->capturePayPalOrder($paypalOrderId);
-                if ($capturedId !== null) {
-                    $completion->markPaidAndNotify($order, 'paypal', $capturedId);
+                $verified = $providers->captureAndVerifyPayPalOrder($paypalOrderId, $order);
+                if ($verified !== null) {
+                    $completion->markPaidAndNotify($order, 'paypal', $verified['external_id']);
                 }
             }
         }

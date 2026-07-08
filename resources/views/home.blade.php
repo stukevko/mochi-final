@@ -18,14 +18,12 @@
             <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
                 <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-14 xl:gap-20">
                     <div class="flex flex-col lg:pr-2">
-                        @if ($heroLogoUrl)
-                            <img
-                                src="{{ $heroLogoUrl }}"
-                                alt="{{ $siteName }}"
-                                class="mb-8 h-12 w-auto max-w-[12rem] object-contain opacity-90 sm:mb-10 sm:h-14"
-                            >
-                        @endif
-                        <h1 class="font-display text-4xl font-extrabold uppercase leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[2.65rem] xl:text-6xl">
+                        <img
+                            src="{{ $heroLogoUrl }}"
+                            alt="{{ $siteName }}"
+                            class="mb-8 h-12 w-auto max-w-[14rem] object-contain opacity-95 sm:mb-10 sm:h-14"
+                        >
+                        <h1 class="font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[2.65rem] xl:text-6xl">
                             {{ $heroHeadline }}
                         </h1>
                         <a

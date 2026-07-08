@@ -8,6 +8,10 @@ use App\Models\Setting;
 use App\Models\SiteSetting;
 use App\Observers\ProductObserver;
 use App\Support\FeaturedProductImageOptimizer;
+use App\Support\ShopBranding;
+use App\Support\ShopTypography;
+use App\Support\StorefrontLayoutCache;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -58,27 +62,42 @@ class AppServiceProvider extends ServiceProvider
 
         View::share('siteName', config('mochicards.site_name'));
 
-        if (Schema::hasTable('settings')) {
-            View::composer('pages.legal-impressum', function ($view): void {
-                $html = Setting::get('legal_impressum');
-                $view->with('legalHtml', is_string($html) && $html !== '' ? $html : '<p class="text-mochi-muted">Bitte den Impressumstext im Admin unter <strong>Einstellungen</strong> pflegen (<code>legal_impressum</code>).</p>');
-            });
-            View::composer('pages.legal-agb', function ($view): void {
-                $html = Setting::get('legal_agb');
-                $view->with('legalHtml', is_string($html) && $html !== '' ? $html : '<p class="text-mochi-muted">Bitte die AGB im Admin pflegen (<code>legal_agb</code>).</p>');
-            });
-            View::composer('pages.legal-datenschutz', function ($view): void {
-                $html = Setting::get('legal_privacy');
-                $view->with('legalHtml', is_string($html) && $html !== '' ? $html : '<p class="text-mochi-muted">Bitte die Datenschutzerklärung im Admin pflegen (<code>legal_privacy</code>).</p>');
-            });
-            View::composer('pages.legal-widerruf', function ($view): void {
-                $html = Setting::get('legal_widerruf');
-                $view->with('legalHtml', is_string($html) && $html !== '' ? $html : '<p class="text-mochi-muted">Bitte den Widerrufstext im Admin pflegen (<code>legal_widerruf</code>).</p>');
-            });
-        }
+        View::composer('pages.legal-impressum', fn ($view) => $view->with(
+            'legalHtml',
+            self::legalHtmlWithCmsFallback(
+                'legal_impressum',
+                'impressum',
+                'Bitte den Impressumstext im Admin unter <strong>Konfiguration → Rechtstexte</strong> pflegen.'
+            )
+        ));
+        View::composer('pages.legal-agb', fn ($view) => $view->with(
+            'legalHtml',
+            self::legalHtmlWithCmsFallback(
+                'legal_agb',
+                null,
+                'Bitte die AGB im Admin unter <strong>Konfiguration → Rechtstexte</strong> pflegen.'
+            )
+        ));
+        View::composer('pages.legal-datenschutz', fn ($view) => $view->with(
+            'legalHtml',
+            self::legalHtmlWithCmsFallback(
+                'legal_privacy',
+                'datenschutz',
+                'Bitte die Datenschutzerklärung im Admin unter <strong>Konfiguration → Rechtstexte</strong> pflegen.'
+            )
+        ));
+        View::composer('pages.legal-widerruf', fn ($view) => $view->with(
+            'legalHtml',
+            self::legalHtmlWithCmsFallback(
+                'legal_widerruf',
+                'widerruf',
+                'Bitte den Widerrufstext im Admin unter <strong>Konfiguration → Rechtstexte</strong> pflegen.'
+            )
+        ));
 
         $frontLayoutKeys = [
             'layouts.app',
+            'components.layouts.app',
             'home',
             'events.index',
             'events.calendar',
@@ -99,52 +118,73 @@ class AppServiceProvider extends ServiceProvider
         ];
 
         View::composer($frontLayoutKeys, function ($view) {
-            $slugs = ['impressum', 'widerruf', 'datenschutz'];
-            $bySlug = CmsPage::query()->whereIn('slug', $slugs)->get()->keyBy('slug');
+            $data = Cache::remember(StorefrontLayoutCache::KEY, now()->addMinutes(10), function (): array {
+                $slugs = ['impressum', 'widerruf', 'datenschutz'];
+                $bySlug = CmsPage::query()->whereIn('slug', $slugs)->get()->keyBy('slug');
 
-            $footerLegalLink = static function (string $slug, string $fallbackLabel, string $fallbackRouteName) use ($bySlug): array {
-                $page = $bySlug->get($slug);
+                $footerLegalLink = static function (string $slug, string $fallbackLabel, string $fallbackRouteName) use ($bySlug): array {
+                    $page = $bySlug->get($slug);
 
-                return [
-                    'label' => $page ? (string) $page->title : $fallbackLabel,
-                    'url' => $page ? route('pages.show', $page) : route($fallbackRouteName),
-                ];
-            };
+                    return [
+                        'label' => $page ? (string) $page->title : $fallbackLabel,
+                        'url' => $page ? route('pages.show', $page) : route($fallbackRouteName),
+                    ];
+                };
 
-            $footerLegalLinks = [
-                $footerLegalLink('impressum', 'Impressum', 'legal.impressum'),
-                $footerLegalLink('widerruf', 'Widerruf', 'legal.widerruf'),
-                $footerLegalLink('datenschutz', 'Datenschutz', 'legal.datenschutz'),
-                ['label' => 'AGB', 'url' => route('legal.agb')],
-                ['label' => 'Kontakt', 'url' => route('contact')],
-                ['label' => 'Shop', 'url' => route('shop')],
-            ];
-
-            $settings = SiteSetting::query()->first();
-            $instagramUrl = $settings?->instagram_url ?: config('mochicards.instagram_url');
-            $tiktokFromSettings = trim((string) ($settings?->tiktok_url ?? ''));
-            $tiktokUrl = $tiktokFromSettings !== ''
-                ? $tiktokFromSettings
-                : trim((string) config('mochicards.tiktok_url'));
-            $footerCarouselUrls = [];
-            if ($settings) {
+                $settings = SiteSetting::current();
+                $instagramUrl = $settings->instagram_url ?: config('mochicards.instagram_url');
+                $tiktokFromSettings = trim((string) ($settings->tiktok_url ?? ''));
+                $tiktokUrl = $tiktokFromSettings !== ''
+                    ? $tiktokFromSettings
+                    : trim((string) config('mochicards.tiktok_url'));
+                $footerCarouselUrls = [];
                 foreach ($settings->footerImagePaths() as $path) {
                     $footerCarouselUrls[] = Storage::disk('public')->url($path);
                 }
-            }
 
-            $heroLearnMoreUrl = $settings?->hero_learn_more_url ?: route('posts.index');
+                return [
+                    'footerLegalLinks' => [
+                        $footerLegalLink('impressum', 'Impressum', 'legal.impressum'),
+                        $footerLegalLink('widerruf', 'Widerruf', 'legal.widerruf'),
+                        $footerLegalLink('datenschutz', 'Datenschutz', 'legal.datenschutz'),
+                        ['label' => 'AGB', 'url' => route('legal.agb')],
+                        ['label' => 'Kontakt', 'url' => route('contact')],
+                        ['label' => 'Shop', 'url' => route('shop')],
+                    ],
+                    'instagramUrl' => $instagramUrl,
+                    'tiktokUrl' => $tiktokUrl,
+                    'footerCarouselUrls' => $footerCarouselUrls,
+                    'heroLearnMoreUrl' => $settings->hero_learn_more_url ?: route('posts.index'),
+                    'backgroundAnimationsEnabled' => (bool) ($settings->background_animations ?? true),
+                    'shopDisplayName' => ShopBranding::displayName(),
+                    'shopLogoUrl' => ShopBranding::logoUrl(),
+                    'shopLogoIsPlaceholder' => ShopBranding::usesPlaceholderLogo(),
+                    'shopFontFamily' => ShopTypography::normalizeFamily(
+                        (string) (Setting::get('font_family') ?: ShopTypography::DEFAULT_FAMILY)
+                    ),
+                ];
+            });
 
-            $backgroundAnimationsEnabled = $settings ? (bool) ($settings->background_animations ?? true) : true;
-
-            $view->with([
-                'footerLegalLinks' => $footerLegalLinks,
-                'instagramUrl' => $instagramUrl,
-                'tiktokUrl' => $tiktokUrl,
-                'footerCarouselUrls' => $footerCarouselUrls,
-                'heroLearnMoreUrl' => $heroLearnMoreUrl,
-                'backgroundAnimationsEnabled' => $backgroundAnimationsEnabled,
-            ]);
+            $view->with($data);
         });
+    }
+
+    private static function legalHtmlWithCmsFallback(string $settingKey, ?string $cmsSlug, string $placeholder): string
+    {
+        if (Schema::hasTable('settings')) {
+            $html = Setting::get($settingKey);
+            if (is_string($html) && trim($html) !== '') {
+                return $html;
+            }
+        }
+
+        if ($cmsSlug !== null && Schema::hasTable('cms_pages')) {
+            $page = CmsPage::query()->where('slug', $cmsSlug)->first();
+            if ($page && filled($page->body)) {
+                return (string) $page->body;
+            }
+        }
+
+        return '<p class="text-mochi-muted">'.$placeholder.'</p>';
     }
 }

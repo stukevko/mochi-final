@@ -29,7 +29,7 @@
 
     <h1 class="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Checkout</h1>
     <p class="mt-2 max-w-2xl text-sm text-mochi-muted">
-        Prüfe deine Angaben und schließe die Bestellung ab. Die Zahlung erfolgt sicher über SumUp.
+        Prüfe deine Angaben und schließe die Bestellung ab. Die Zahlung erfolgt über den gewählten Zahlungsdienstleister (siehe Datenschutzerklärung).
     </p>
 
     @if ($errors->has('cart'))
@@ -185,11 +185,15 @@
                         @enderror
                     </div>
                 </div>
+                <p class="mt-4 text-xs leading-relaxed text-mochi-muted">
+                    Deine Angaben werden zur Bestellabwicklung verarbeitet. Details in der
+                    <a href="{{ route('legal.datenschutz') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-mochi-coral underline-offset-2 hover:underline">Datenschutzerklärung</a>.
+                </p>
             </section>
 
             <section class="mochi-card rounded-2xl border border-white/10 bg-[#080c12]/40 p-6 backdrop-blur-xl sm:p-8">
                 <h2 class="text-lg font-semibold text-white">Zahlungsart</h2>
-                <p class="mt-1 text-sm text-mochi-muted">Online-Zahlung über SumUp — dieselbe Abrechnung wie an der Ladentheke.</p>
+                <p class="mt-1 text-sm text-mochi-muted">Wähle, wie du bezahlen möchtest. Externe Zahlungsanbieter können eigene Cookies setzen.</p>
                 <div class="mt-6 space-y-3">
                     @forelse ($this->paymentMethods as $method)
                         <label
@@ -282,6 +286,10 @@
                     <div class="mt-6 border-t border-white/10 pt-6">
                         <div class="space-y-2 text-sm">
                             <div class="flex items-center justify-between">
+                                <span class="text-mochi-muted">Versand</span>
+                                <span class="font-medium text-white">Kostenfrei</span>
+                            </div>
+                            <div class="flex items-center justify-between">
                                 <span class="text-mochi-muted">Nettosumme</span>
                                 <span class="font-medium text-white">{{ $this->formatPrice($this->netSubtotal) }}</span>
                             </div>
@@ -295,6 +303,26 @@
                             <span class="text-lg font-bold text-mochi-coral">{{ $this->formatPrice($this->total) }}</span>
                         </div>
                     </div>
+                </div>
+
+                <div class="mt-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                    <label class="flex cursor-pointer items-start gap-3">
+                        <input
+                            type="checkbox"
+                            wire:model.defer="accepted_legal"
+                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-[#040712] text-mochi-accent focus:ring-mochi-accent/40"
+                        />
+                        <span class="text-sm text-mochi-muted">
+                            Ich habe die
+                            <a href="{{ route('legal.agb') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-mochi-coral underline decoration-mochi-coral/40 underline-offset-2 hover:text-white">AGB</a>
+                            und die
+                            <a href="{{ route('legal.widerruf') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-mochi-coral underline decoration-mochi-coral/40 underline-offset-2 hover:text-white">Widerrufsbelehrung</a>
+                            gelesen und akzeptiere sie.
+                        </span>
+                    </label>
+                    @error('accepted_legal')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <button
@@ -314,7 +342,7 @@
                 </button>
 
                 <p class="hidden text-center text-xs text-mochi-muted lg:block">
-                    Mit dem Abschluss erklärst du dich mit unseren AGB einverstanden.
+                    Mit Klick auf „Jetzt zahlungspflichtig bestellen“ schließt du einen Kaufvertrag ab. Rechnung erhältst du per E-Mail.
                 </p>
             </div>
         </aside>
@@ -333,7 +361,7 @@
                 wire:target="placeOrder"
                 class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 shrink-0 px-6"
             >
-                <span wire:loading.remove wire:target="placeOrder">Jetzt kaufen</span>
+                <span wire:loading.remove wire:target="placeOrder">Jetzt zahlungspflichtig bestellen</span>
                 <span wire:loading wire:target="placeOrder" class="inline-flex items-center gap-2">
                     <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

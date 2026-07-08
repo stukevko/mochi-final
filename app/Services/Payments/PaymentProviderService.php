@@ -4,6 +4,7 @@ namespace App\Services\Payments;
 
 use App\Models\Order;
 use App\Models\PaymentGateway;
+use App\Support\PaymentOrderVerifier;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Stripe\Exception\InvalidRequestException;
@@ -213,6 +214,12 @@ class PaymentProviderService
             return ['paid' => false, 'transaction_id' => null, 'status' => (string) ($response->json('status') ?? null)];
         }
 
+        $paidAmount = (float) ($response->json('amount') ?? $response->json('total_amount') ?? 0);
+        $currency = (string) ($response->json('currency') ?? $order->currency ?? 'EUR');
+        if ($paidAmount > 0 && ! PaymentOrderVerifier::amountsMatch($order, $paidAmount, $currency)) {
+            return ['paid' => false, 'transaction_id' => null, 'status' => (string) ($response->json('status') ?? null)];
+        }
+
         $status = strtoupper((string) ($response->json('status') ?? ''));
         $transactionId = (string) (
             $response->json('transaction_id')
@@ -245,6 +252,33 @@ class PaymentProviderService
         ];
     }
 
+    /**
+     * @return array{external_id: string}|null
+     */
+    public function captureAndVerifyPayPalOrder(string $paypalOrderId, Order $order): ?array
+    {
+        $accessToken = $this->getPayPalAccessToken();
+        $baseUrl = $this->payPalBaseUrl();
+
+        $response = Http::withToken($accessToken)
+            ->acceptJson()
+            ->post($baseUrl.'/v2/checkout/orders/'.$paypalOrderId.'/capture');
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $payload = $response->json();
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        return PaymentOrderVerifier::verifyPayPalOrderPayload($payload, $order);
+    }
+
+    /**
+     * @deprecated Use captureAndVerifyPayPalOrder()
+     */
     public function capturePayPalOrder(string $paypalOrderId): ?string
     {
         $accessToken = $this->getPayPalAccessToken();

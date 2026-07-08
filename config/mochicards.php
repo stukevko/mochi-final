@@ -4,7 +4,7 @@ return [
     'instagram_url' => env('MOCHI_INSTAGRAM_URL', 'https://www.instagram.com/'),
     'tiktok_url' => env('MOCHI_TIKTOK_URL', ''),
     'site_name' => env('MOCHI_SITE_NAME', 'Mochi Cards'),
-    'default_shop_url' => env('MOCHI_SHOP_URL', 'https://example.com'),
+    'default_shop_url' => env('MOCHI_SHOP_URL', '/shop'),
     /**
      * Absoluter Fallback für „Besuch uns im Laden“, wenn das Admin-Feld leer ist.
      * (Google Maps — Suche „Mochi Cards Speyer“)
@@ -23,7 +23,7 @@ return [
     /** Standard-Headline (Hero), wenn im Admin leer — lokal für Speyer */
     'home_hero_headline_default' => env(
         'MOCHI_HERO_HEADLINE',
-        'DEIN WOHNZIMMER FÜR TCG IN SPEYER',
+        'Dein TCG WOHNZIMMER IN Speyer',
     ),
 
     /**
@@ -32,12 +32,12 @@ return [
      */
     'home_featured_default_title' => env(
         'MOCHI_FEATURED_TITLE',
-        'Shop-Highlight: Kevko\'s Community Token - Limitierte Edition',
+        'Frisch im Shop: TCG-Neuheiten & Beliebtes',
     ),
 
     'home_featured_default_description' => env(
         'MOCHI_FEATURED_DESCRIPTION',
-        'Dies ist mehr als nur eine Karte. Es ist Kevko\'s persönliche Hommage an euch, die Speyerer TCG-Szene. Jedes Exemplar wurde von ihm zum Launch des Ladens hand-illustriert und signiert. Ein echtes Stück „Mochi-Wohnzimmer“ für deine Sammlung.',
+        'Booster, Displays und Zubehör für Pokémon, Magic, Yu-Gi-Oh! und mehr — direkt aus unserem Laden in Speyer.',
     ),
 
     /** News-Vorschau (Fallback), wenn keine Beiträge online — „Always-Open“-Vibe */
@@ -48,7 +48,7 @@ return [
 
     'home_news_fallback_body' => env(
         'MOCHI_NEWS_FALLBACK_BODY',
-        'Dank Kevko\'s unermüdlichem Einsatz haben wir jetzt noch mehr Platz für Tische und eine neue Kaffeeküche. Kommt vorbei und checkt es aus!',
+        'Wir haben mehr Platz für Tische und eine gemütliche Kaffeeküche geschaffen. Kommt vorbei und spielt eine Runde mit uns!',
     ),
 
     /**

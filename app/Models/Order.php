@@ -46,6 +46,7 @@ class Order extends Model
         'billing_address' => 'array',
         'shipping_address' => 'array',
         'payment_data' => 'array',
+        'terms_accepted_at' => 'datetime',
     ];
 
     /**

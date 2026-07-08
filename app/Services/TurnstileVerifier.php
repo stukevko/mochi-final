@@ -21,7 +21,7 @@ final class TurnstileVerifier
     public static function verify(?string $token, ?string $remoteIp): bool
     {
         if (! self::secretConfigured()) {
-            return true;
+            return ! app()->environment('production');
         }
 
         if (! is_string($token) || trim($token) === '') {

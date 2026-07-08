@@ -9,6 +9,7 @@ use App\Models\ShopLink;
 use App\Models\SiteSetting;
 use App\Support\BenefitTileIcons;
 use App\Support\MoneyFormatter;
+use App\Support\ShopBranding;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -34,8 +35,9 @@ class HomeController extends Controller
         $settings = SiteSetting::current();
 
         $heroLogoUrl = $settings->hero_logo_path
+            && Storage::disk('public')->exists($settings->hero_logo_path)
             ? Storage::disk('public')->url($settings->hero_logo_path)
-            : null;
+            : ShopBranding::logoUrl();
 
         $heroBackgroundUrl = $settings->hero_background_path
             ? Storage::disk('public')->url($settings->hero_background_path)
@@ -196,7 +198,7 @@ class HomeController extends Controller
             ['title' => 'Blitzversand', 'body' => 'In 24h bei dir (DE)', 'icon' => 'bolt'],
             ['title' => 'Community', 'body' => 'Dein TCG-Wohnzimmer in Speyer', 'icon' => 'heart'],
             ['title' => 'Turniere', 'body' => 'Wöchentliche Locals & Cups', 'icon' => 'trophy'],
-            ['title' => 'Safe Pay', 'body' => 'SSL-verschlüsselt & Käuferschutz', 'icon' => 'lock'],
+            ['title' => 'SumUp', 'body' => 'Sicher online & im Laden bezahlen', 'icon' => 'lock'],
         ];
 
         $out = [];

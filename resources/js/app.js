@@ -1,5 +1,6 @@
 import './bootstrap';
 import './mochi-calendar';
+import { initCookieConsent } from './cookie-consent';
 
 /**
  * Dezentes Parallax auf große Hintergrund-Bokeh-Kreise (Glow-Up).
@@ -117,11 +118,13 @@ if (document.readyState === 'loading') {
         initMochiParallaxOrbs();
         initMochiHeaderScroll();
         initMochiMobileNav();
+        initCookieConsent();
     });
 } else {
     initMochiParallaxOrbs();
     initMochiHeaderScroll();
     initMochiMobileNav();
+    initCookieConsent();
 }
 
 const TOAST_DEFAULT_MS = 3200;

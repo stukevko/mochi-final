@@ -15,6 +15,17 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "@fontsource/dm-sans": "^5.2.8",
+        "@fontsource/instrument-sans": "^5.2.8",
+        "@fontsource/inter": "^5.2.8",
+        "@fontsource/lato": "^5.2.7",
+        "@fontsource/merriweather": "^5.2.11",
+        "@fontsource/montserrat": "^5.2.8",
+        "@fontsource/open-sans": "^5.2.7",
+        "@fontsource/playfair-display": "^5.2.8",
+        "@fontsource/poppins": "^5.2.7",
+        "@fontsource/roboto": "^5.2.10",
+        "@fontsource/source-sans-3": "^5.2.9",
         "@fullcalendar/core": "^6.1.20",
         "@fullcalendar/daygrid": "^6.1.20",
         "@fullcalendar/list": "^6.1.20"

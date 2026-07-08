@@ -18,6 +18,8 @@ class ProductGrid extends Component
 
     private const LOAD_MORE_STEP = 24;
 
+    private const MAX_VISIBLE = 200;
+
     #[Url(as: 'category')]
     public ?string $categorySlug = null;
 
@@ -60,7 +62,7 @@ class ProductGrid extends Component
             return;
         }
 
-        $this->visibleLimit += self::LOAD_MORE_STEP;
+        $this->visibleLimit = min($this->visibleLimit + self::LOAD_MORE_STEP, self::MAX_VISIBLE);
     }
 
     /**
@@ -69,12 +71,14 @@ class ProductGrid extends Component
     #[Computed]
     public function categories(): \Illuminate\Database\Eloquent\Collection
     {
-        return Category::query()
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->withCount(['products' => fn ($q) => $q->where('is_active', true)])
-            ->orderBy('sort_order')
-            ->get();
+        return Cache::remember(Category::CACHE_KEY_NAV_ROOT, now()->addMinutes(30), function () {
+            return Category::query()
+                ->where('is_active', true)
+                ->whereNull('parent_id')
+                ->withCount(['products' => fn ($q) => $q->where('is_active', true)])
+                ->orderBy('sort_order')
+                ->get();
+        });
     }
 
     /**
@@ -197,7 +201,6 @@ class ProductGrid extends Component
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
-                    ->orWhere('description', 'like', "%{$this->search}%")
                     ->orWhere('sku', 'like', "%{$this->search}%");
             });
         }

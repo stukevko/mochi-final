@@ -86,6 +86,9 @@
                         </span>
                     @endif
                 </div>
+                <div class="mt-2">
+                    @include('partials.price-legal-hint', ['compact' => true])
+                </div>
 
                 <p class="mt-3 text-sm {{ $this->displayStock > 0 ? 'text-emerald-400' : 'text-rose-400' }}">
                     @if ($this->displayStock > 0)

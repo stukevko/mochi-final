@@ -23,8 +23,7 @@ class PostController extends Controller
                 $query->where(function ($inner) use ($q) {
                     $inner
                         ->where('title', 'like', '%'.$q.'%')
-                        ->orWhere('excerpt', 'like', '%'.$q.'%')
-                        ->orWhere('body', 'like', '%'.$q.'%');
+                        ->orWhere('excerpt', 'like', '%'.$q.'%');
                 });
             })
             ->when(

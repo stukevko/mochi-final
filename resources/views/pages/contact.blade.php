@@ -6,17 +6,6 @@
     <meta name="description" content="Mochi Cards Speyer — Kontaktformular, Öffnungszeiten und Anfahrt.">
 @endpush
 
-@push('scripts')
-    @if (\App\Services\TurnstileVerifier::siteKey())
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-        <script>
-            function mochiTurnstileCallback(token) {
-                window.dispatchEvent(new CustomEvent('mochi-turnstile', { detail: { token: token } }));
-            }
-        </script>
-    @endif
-@endpush
-
 @section('content')
     <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <div class="max-w-2xl">
@@ -33,7 +22,7 @@
                 >
                     <h2 class="font-display text-lg font-bold text-white">Nachricht schreiben</h2>
                     <p class="mt-1 text-xs text-mochi-muted">Pflichtfelder sind gekennzeichnet. Wir antworten per E-Mail.</p>
-                    <div class="mt-6">
+                    <div class="mt-6" data-consent-turnstile>
                         <livewire:contact-form />
                     </div>
                 </div>
@@ -77,19 +66,11 @@
                         </div>
                     @endif
 
-                    <div
-                        class="overflow-hidden rounded-3xl border border-white/10 bg-[#080c12] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                    >
-                        <div class="aspect-[4/3] w-full [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:min-h-[220px] [&_iframe]:border-0 [&_iframe]:grayscale [&_iframe]:invert [&_iframe]:contrast-[1.15]">
-                            <iframe
-                                src="{{ $mapsEmbedUrl }}"
-                                loading="lazy"
-                                referrerpolicy="no-referrer-when-downgrade"
-                                title="Karte Mochi Cards Speyer"
-                                allowfullscreen
-                            ></iframe>
-                        </div>
-                    </div>
+                    @include('partials.consent-map-embed', [
+                        'embedUrl' => $mapsEmbedUrl,
+                        'externalUrl' => $mapsExternalUrl,
+                        'title' => 'Karte Mochi Cards Speyer',
+                    ])
                 </div>
             </aside>
         </div>

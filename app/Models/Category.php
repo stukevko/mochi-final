@@ -11,18 +11,20 @@ use Illuminate\Support\Facades\Cache;
 
 class Category extends Model
 {
-    /** Nur Arrays cachen (keine Eloquent-Collections im Cache — sonst fehlerhafte Typen nach unserialize). */
-    public const CACHE_KEY_NAV_ROOT = 'shop.nav.root_categories.v2';
+    /** Nur Kategorie-IDs cachen (keine Eloquent-Models — sicher nach Deploys/unserialize). */
+    public const CACHE_KEY_NAV_ROOT = 'shop.nav.root_categories.v3';
 
     protected static function booted(): void
     {
         static::saved(function (): void {
             Cache::forget(self::CACHE_KEY_NAV_ROOT);
+            Cache::forget('shop.nav.root_categories.v2');
             Cache::forget('shop.nav.root_categories.v1');
         });
 
         static::deleted(function (): void {
             Cache::forget(self::CACHE_KEY_NAV_ROOT);
+            Cache::forget('shop.nav.root_categories.v2');
             Cache::forget('shop.nav.root_categories.v1');
         });
     }

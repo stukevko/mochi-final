@@ -71,14 +71,42 @@ class ProductGrid extends Component
     #[Computed]
     public function categories(): \Illuminate\Database\Eloquent\Collection
     {
-        return Cache::remember(Category::CACHE_KEY_NAV_ROOT, now()->addMinutes(30), function () {
+        $cached = Cache::get(Category::CACHE_KEY_NAV_ROOT);
+
+        if (is_array($cached) && array_key_exists('ids', $cached)) {
+            $ids = array_values(array_filter($cached['ids'], fn ($id): bool => is_int($id) || ctype_digit((string) $id)));
+
+            if ($ids === []) {
+                return Category::newCollection();
+            }
+
             return Category::query()
+                ->whereIn('id', $ids)
                 ->where('is_active', true)
                 ->whereNull('parent_id')
                 ->withCount(['products' => fn ($q) => $q->where('is_active', true)])
                 ->orderBy('sort_order')
                 ->get();
-        });
+        }
+
+        if ($cached !== null) {
+            Cache::forget(Category::CACHE_KEY_NAV_ROOT);
+        }
+
+        $categories = Category::query()
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->withCount(['products' => fn ($q) => $q->where('is_active', true)])
+            ->orderBy('sort_order')
+            ->get();
+
+        Cache::put(
+            Category::CACHE_KEY_NAV_ROOT,
+            ['ids' => $categories->pluck('id')->map(fn ($id) => (int) $id)->all()],
+            now()->addMinutes(30),
+        );
+
+        return $categories;
     }
 
     /**

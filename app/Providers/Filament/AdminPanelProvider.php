@@ -2,12 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use AdriaanZon\FilamentPasskeys\FilamentPasskeysPlugin;
+use AdriaanZon\FilamentPasskeys\PasskeyAuthentication;
 use App\Filament\Pages\AdminDashboard;
 use App\Filament\Pages\Auth\Login;
 use App\Http\Middleware\ConfigureFilamentSession;
 use App\Http\Middleware\SetFilamentLocale;
 use App\Models\Setting;
-use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\BunnyFontProvider;
 use Filament\Http\Middleware\Authenticate;
@@ -54,9 +55,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
+            ->profile()
+            ->plugins([
+                FilamentPasskeysPlugin::make(),
+            ])
             ->multiFactorAuthentication(
                 [
-                    AppAuthentication::make(),
+                    PasskeyAuthentication::make(),
                 ],
                 isRequired: $requireTwoFactor,
             )

@@ -22,5 +22,5 @@ Artisan::command('mochi:reset-admin {--email=admin@mochicards.test} {--password=
         ],
     );
 
-    $this->info("Filament-Admin gesetzt: {$email} (Passwort wie angegeben — danach ggf. 2FA neu einrichten).");
+    $this->info("Filament-Admin gesetzt: {$email} (Passwort wie angegeben — danach ggf. Passkey im Profil neu einrichten).");
 })->purpose('Legt den Admin-Benutzer an oder setzt Passwort/Rolle zurück (Klartext-Passwort wird vom Model gehasht).');

@@ -155,11 +155,13 @@ php artisan optimize:clear
 
 ## 🛡️ 3. Sicherheit (WICHTIG)
 
-### 🔑 2FA (Zwei-Faktor)
+### 🔑 Passkey-MFA (Zwei-Faktor)
 
-- Wenn im **Filament-Panel** die Authentifizierungs-App aktiviert ist: Beim Einrichten einen **QR-Code** mit **Google Authenticator**, **Authy** o. Ä. scannen.
-- **Recovery-Codes:** Unbedingt **sicher ablegen** (Passwortmanager, Ausdruck im Tresor). Ohne Codes und ohne Gerät kann der Zugang dauerhaft weg sein.
-- Technische Vorbereitung kann im Code liegen — **ob** der QR-Schritt im Admin erscheint, hängt von der Panel-Konfiguration ab. Bei Unklarheit bitte bei der Übergabe nachfragen.
+- Der Admin nutzt **Passkeys** statt Authenticator-Apps (kein TOTP/QR-Code mehr).
+- **Einrichtung:** Nach E-Mail+Passwort-Login im **Profil** (`/admin/profile`) einen Passkey registrieren (Fingerabdruck, Face ID, Geräte-PIN oder Sicherheitsschlüssel).
+- **Anmeldung:** E-Mail + Passwort, danach Passkey-Bestätigung.
+- **Wichtig:** Ohne registrierten Passkey und bei `FILAMENT_REQUIRE_2FA=true` ist kein Admin-Zugang möglich. Es gibt **keinen E-Mail-Fallback** — verlorene Passkeys können nur durch einen Techniker (DB/Server) behoben werden. **Mindestens zwei Geräte/Passkeys** empfohlen.
+- Production: `APP_URL` muss exakt der Live-Domain entsprechen (z. B. `https://mochi-cards.de`); `PASSKEYS_RELYING_PARTY_ID` und `PASSKEYS_ALLOWED_ORIGINS` nur bei Abweichung setzen.
 
 ### 🚫 Schutz
 

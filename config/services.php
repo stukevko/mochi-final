@@ -50,6 +50,8 @@ return [
     'sumup' => [
         'token' => env('SUMUP_TOKEN'),
         'merchant_code' => env('SUMUP_MERCHANT_CODE'),
+        /** SumUp Back Office → Produkte → Export CSV (für shop:sumup-sync-catalog) */
+        'catalog_csv_path' => env('SUMUP_CATALOG_CSV_PATH'),
     ],
 
     /*

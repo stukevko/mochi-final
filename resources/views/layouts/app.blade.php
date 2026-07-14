@@ -108,6 +108,17 @@
                             News
                         </a>
                         <a
+                            href="{{ route('about') }}"
+                            @class([
+                                'rounded-full px-3 py-1.5 transition',
+                                request()->routeIs('about')
+                                    ? 'bg-mochi-accent/15 font-semibold text-mochi-accent ring-1 ring-mochi-accent/35'
+                                    : 'text-white/90 hover:bg-white/10 hover:text-white',
+                            ])
+                        >
+                            Über uns
+                        </a>
+                        <a
                             href="{{ route('contact') }}"
                             @class([
                                 'rounded-full px-3 py-1.5 transition',

@@ -92,8 +92,26 @@ HTML,
         $settings = SiteSetting::current();
         if (blank($settings->hero_headline)) {
             $settings->hero_headline = 'Dein TCG WOHNZIMMER IN Speyer';
-            $settings->save();
         }
+        if (blank($settings->about_page_title)) {
+            $settings->forceFill([
+                'about_page_title' => 'Über uns',
+                'about_hero_subtitle' => 'Dein TCG Wohnzimmer in Speyer',
+                'about_intro' => 'Mochi Cards ist mehr als ein Kartenladen — wir sind Treffpunkt für TCG-Fans, Sammler und Spieler aus Speyer und der Region.',
+                'about_story' => '<p>Seit unserer Eröffnung in der Maximilianstraße 43 in Speyer bieten wir Pokémon, Magic, Yu-Gi-Oh! und vieles mehr — mit Beratung, Events und einer Community, die zusammenwächst.</p><p>Im Laden findest du frische Booster, Displays, Singles und Zubehör. Online kannst du ausgewählte Highlights bestellen und dich über News & Events auf dem Laufenden halten.</p>',
+                'about_highlight_1_title' => 'Laden & Community',
+                'about_highlight_1_body' => 'Spieltische, Events und ein Team, das TCG wirklich lebt.',
+                'about_highlight_2_title' => 'Sortiment',
+                'about_highlight_2_body' => 'Neuheiten, Beliebtes und seltene Fundstücke für Sammler.',
+                'about_highlight_3_title' => 'Online-Shop',
+                'about_highlight_3_body' => 'Ausgewählte Produkte bequem nach Hause bestellen.',
+                'about_instagram_heading' => 'Ein Blick in unseren Laden',
+                'about_cta_label' => 'Besuch uns in Speyer',
+                'about_cta_url' => '/kontakt',
+                'about_meta_description' => 'Mochi Cards Speyer — TCG-Laden, Community und Online-Shop. Lerne uns kennen.',
+            ]);
+        }
+        $settings->save();
 
         $this->call(PresentationSeeder::class);
         $this->call(DemoShopSeeder::class);

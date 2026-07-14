@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Services\CartService;
+use App\Services\Inventory\StockService;
 use App\Services\Payments\PaymentProviderService;
 use App\Support\MoneyFormatter;
 use App\Support\ShopErrorLogger;
@@ -106,6 +107,7 @@ class CheckoutPage extends Component
                 $taxRate = $this->getTaxRate();
                 $netDivisor = 1 + ($taxRate / 100);
                 $paymentStatus = 'pending';
+                $commitStockNow = ! $this->isOnlinePaymentMethod($this->payment_method);
 
                 $order = new Order;
                 $order->forceFill([
@@ -156,12 +158,8 @@ class CheckoutPage extends Component
                         if ($variant->stock < $quantity) {
                             throw new \RuntimeException("Variante {$item['name']} ist nicht ausreichend auf Lager.");
                         }
-                        $variant->decrement('stock', $quantity);
-                    } elseif ($product) {
-                        if ((int) $product->stock < $quantity) {
-                            throw new \RuntimeException("Produkt {$item['name']} ist nicht ausreichend auf Lager.");
-                        }
-                        $product->decrement('stock', $quantity);
+                    } elseif ((int) $product->stock < $quantity) {
+                        throw new \RuntimeException("Produkt {$item['name']} ist nicht ausreichend auf Lager.");
                     }
 
                     $unitPrice = $variant
@@ -197,6 +195,10 @@ class CheckoutPage extends Component
                     'tax' => $taxAmount,
                     'total' => round($grossSubtotal, 2),
                 ])->save();
+
+                if ($commitStockNow) {
+                    app(StockService::class)->commitOrderStock($order);
+                }
 
                 return $order;
             });

@@ -63,6 +63,7 @@
                     MFA &amp; Profil
                 </x-filament::link>
             @endif
+            <x-filament::link :href="$aboutPageUrl" icon="heroicon-o-user-group">Über uns</x-filament::link>
             <x-filament::link :href="$eventsIndexUrl" icon="heroicon-o-calendar-days">Alle Events</x-filament::link>
             <x-filament::link :href="$calendarPageUrl" icon="heroicon-o-calendar">Kalender-Ansicht</x-filament::link>
         </div>

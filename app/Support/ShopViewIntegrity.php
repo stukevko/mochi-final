@@ -32,6 +32,7 @@ final class ShopViewIntegrity
             'pages.checkout-success',
             'pages.product',
             'pages.contact',
+            'pages.about',
             'pages.service',
             'pages.storefront-maintenance',
             'pages.legal-impressum',

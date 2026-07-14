@@ -48,6 +48,27 @@ class SiteSetting extends Model
         'footer_image_4',
         'footer_image_5',
         'footer_image_6',
+        'about_page_title',
+        'about_hero_subtitle',
+        'about_intro',
+        'about_story',
+        'about_highlight_1_title',
+        'about_highlight_1_body',
+        'about_highlight_2_title',
+        'about_highlight_2_body',
+        'about_highlight_3_title',
+        'about_highlight_3_body',
+        'about_extra_title',
+        'about_extra_body',
+        'about_instagram_heading',
+        'about_gallery_image_1',
+        'about_gallery_image_2',
+        'about_gallery_image_3',
+        'about_gallery_image_4',
+        'about_gallery_image_5',
+        'about_cta_label',
+        'about_cta_url',
+        'about_meta_description',
     ];
 
     protected function casts(): array
@@ -138,5 +159,45 @@ class SiteSetting extends Model
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<int, string|null> Storage paths relative to public disk
+     */
+    public function aboutGalleryImagePaths(): array
+    {
+        $paths = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $key = "about_gallery_image_{$i}";
+            if ($this->{$key}) {
+                $paths[] = $this->{$key};
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
+     * @return array<int, array{title: string|null, body: string|null}>
+     */
+    public function aboutHighlights(): array
+    {
+        $highlights = [];
+
+        for ($i = 1; $i <= 3; $i++) {
+            $title = trim((string) ($this->{"about_highlight_{$i}_title"} ?? ''));
+            $body = trim((string) ($this->{"about_highlight_{$i}_body"} ?? ''));
+
+            if ($title === '' && $body === '') {
+                continue;
+            }
+
+            $highlights[] = [
+                'title' => $title !== '' ? $title : null,
+                'body' => $body !== '' ? $body : null,
+            ];
+        }
+
+        return $highlights;
     }
 }

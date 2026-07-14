@@ -6,6 +6,7 @@ use App\Mail\AdminOrderNotification;
 use App\Mail\OrderConfirmed;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Services\Inventory\StockService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -22,6 +23,8 @@ class PaymentCompletionService
         }
 
         if (! $alreadyPaid) {
+            app(StockService::class)->commitOrderStock($order);
+
             $order->forceFill([
                 'status' => $order->status === 'pending' ? 'processing' : $order->status,
                 'payment_status' => 'paid',

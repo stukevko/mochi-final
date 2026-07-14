@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AddressSuggestController;
 use App\Http\Controllers\Admin\EventCalendarRescheduleController;
 use App\Http\Controllers\EventController;
@@ -57,6 +58,8 @@ Route::get('/checkout/return/{provider}/{order}', [PaymentCheckoutController::cl
 Route::get('/checkout/cancel/{provider}/{order}', [PaymentCheckoutController::class, 'cancelFromProvider'])->name('payment.cancel');
 Route::post('/webhooks/payment/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.payment.stripe');
 Route::post('/webhooks/payment/paypal', [PaymentWebhookController::class, 'paypal'])->name('webhooks.payment.paypal');
+
+Route::get('/ueber-uns', AboutController::class)->name('about');
 
 Route::get('/service', function () {
     return view('pages.service', [

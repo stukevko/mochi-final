@@ -12,6 +12,8 @@ class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'sku',
+        'sumup_item_id',
+        'sumup_synced_at',
         'price',
         'sale_price',
         'stock',
@@ -23,6 +25,7 @@ class ProductVariant extends Model
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'is_active' => 'boolean',
+        'sumup_synced_at' => 'datetime',
     ];
 
     /**

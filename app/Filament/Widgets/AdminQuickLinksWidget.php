@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Pages\EventCalendarPage;
+use App\Filament\Pages\ManageAboutPage;
 use App\Filament\Pages\ManageSiteSettings;
 use App\Filament\Resources\Events\EventResource;
 use App\Filament\Resources\Posts\PostResource;
@@ -22,6 +23,7 @@ class AdminQuickLinksWidget extends Widget
      * @return array{
      *     eventCreateUrl: string,
      *     siteSettingsUrl: string,
+     *     aboutPageUrl: string,
      *     postCreateUrl: string,
      *     eventsIndexUrl: string,
      *     calendarPageUrl: string,
@@ -33,6 +35,7 @@ class AdminQuickLinksWidget extends Widget
         return [
             'eventCreateUrl' => EventResource::getUrl('create'),
             'siteSettingsUrl' => ManageSiteSettings::getUrl(),
+            'aboutPageUrl' => ManageAboutPage::getUrl(),
             'postCreateUrl' => PostResource::getUrl('create'),
             'eventsIndexUrl' => EventResource::getUrl('index'),
             'calendarPageUrl' => EventCalendarPage::getUrl(),

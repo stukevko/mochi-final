@@ -25,7 +25,7 @@ class SitemapController extends Controller
                 'lastmod' => now(),
             ];
 
-            foreach (['legal.impressum', 'legal.agb', 'legal.datenschutz', 'legal.widerruf', 'service', 'contact'] as $routeName) {
+            foreach (['legal.impressum', 'legal.agb', 'legal.datenschutz', 'legal.widerruf', 'service', 'contact', 'about'] as $routeName) {
                 $entries[] = [
                     'loc' => route($routeName),
                     'lastmod' => now(),

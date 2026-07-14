@@ -29,6 +29,7 @@ class ApplicationIntegrityTest extends TestCase
             '/events/calendar',
             '/journal',
             '/kontakt',
+            '/ueber-uns',
             '/service',
             '/impressum',
             '/agb',

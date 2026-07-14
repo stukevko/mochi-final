@@ -22,6 +22,8 @@ class Product extends Model
         'price',
         'sale_price',
         'sku',
+        'sumup_item_id',
+        'sumup_synced_at',
         'stock',
         'category_id',
         'images',
@@ -37,6 +39,7 @@ class Product extends Model
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'has_variants' => 'boolean',
+        'sumup_synced_at' => 'datetime',
     ];
 
     /**

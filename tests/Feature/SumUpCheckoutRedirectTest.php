@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Services\CartService;
 use App\Services\Payments\PaymentProviderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -87,6 +88,42 @@ class SumUpCheckoutRedirectTest extends TestCase
 
         $order->refresh();
         $this->assertSame('paid', $order->payment_status);
+    }
+
+    public function test_sumup_return_clears_cart_when_paid(): void
+    {
+        Mail::fake();
+
+        config([
+            'services.sumup.token' => 'test-sumup-token',
+            'services.sumup.merchant_code' => 'MC123456',
+        ]);
+
+        session()->put('cart', [
+            'p1' => ['product_id' => 1, 'variant_id' => null, 'quantity' => 2],
+        ]);
+
+        $order = $this->createPendingSumUpOrder([
+            'payment_data' => ['sumup_checkout_id' => 'sumup-checkout-abc'],
+        ]);
+
+        Http::fake([
+            'api.sumup.com/v0.1/checkouts/*' => Http::response([
+                'checkout_reference' => $order->order_number,
+                'status' => 'PAID',
+                'amount' => 79.00,
+                'currency' => 'EUR',
+                'transaction_id' => 'tx-789',
+            ]),
+        ]);
+
+        $this->get(route('payment.return', [
+            'provider' => 'sumup',
+            'order' => $order->id,
+        ]).'?checkout_id=sumup-checkout-abc')
+            ->assertRedirect();
+
+        $this->assertSame([], app(CartService::class)->getRawLines());
     }
 
     public function test_sumup_return_retries_when_checkout_still_pending(): void

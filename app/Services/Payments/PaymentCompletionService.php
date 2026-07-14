@@ -6,6 +6,7 @@ use App\Mail\AdminOrderNotification;
 use App\Mail\OrderConfirmed;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Services\CartService;
 use App\Services\Inventory\StockService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -49,6 +50,8 @@ class PaymentCompletionService
         }
 
         $order->forceFill(['payment_data' => $paymentData])->save();
+
+        app(CartService::class)->clear();
 
         Log::channel('checkout_stack')->info('payment.completed', [
             'order_id' => $order->id,

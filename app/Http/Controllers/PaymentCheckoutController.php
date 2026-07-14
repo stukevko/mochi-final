@@ -62,7 +62,7 @@ class PaymentCheckoutController extends Controller
                     ->with('payment_error', 'SumUp-Zahlung konnte nicht bestätigt werden. Bitte erneut versuchen oder uns kontaktieren.');
             }
 
-            $verification = $providers->verifySumUpCheckout($checkoutId, $order);
+            $verification = $providers->verifySumUpCheckoutWithRetry($checkoutId, $order);
 
             if (! $verification['paid']) {
                 Log::channel('checkout_stack')->warning('payment.return.sumup.not_paid', [

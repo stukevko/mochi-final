@@ -89,6 +89,56 @@ class SumUpCheckoutRedirectTest extends TestCase
         $this->assertSame('paid', $order->payment_status);
     }
 
+    public function test_sumup_return_retries_when_checkout_still_pending(): void
+    {
+        Mail::fake();
+
+        config([
+            'services.sumup.token' => 'test-sumup-token',
+            'services.sumup.merchant_code' => 'MC123456',
+        ]);
+
+        $order = $this->createPendingSumUpOrder([
+            'payment_data' => ['sumup_checkout_id' => 'sumup-checkout-abc'],
+        ]);
+
+        $pendingPayload = [
+            'checkout_reference' => $order->order_number,
+            'status' => 'PENDING',
+            'amount' => 79.00,
+            'currency' => 'EUR',
+        ];
+        $paidPayload = [
+            'checkout_reference' => $order->order_number,
+            'status' => 'PAID',
+            'amount' => 79.00,
+            'currency' => 'EUR',
+            'transaction_id' => 'tx-456',
+        ];
+
+        Http::fake([
+            'api.sumup.com/v0.1/checkouts/*' => Http::sequence()
+                ->push($pendingPayload)
+                ->push($paidPayload),
+        ]);
+
+        $response = $this->get(route('payment.return', [
+            'provider' => 'sumup',
+            'order' => $order->id,
+        ]).'?checkout_id=sumup-checkout-abc');
+
+        $expectedSuccessUrl = URL::temporarySignedRoute(
+            'checkout.success',
+            now()->addDays(7),
+            ['orderNumber' => $order->order_number],
+        );
+
+        $response->assertRedirect($expectedSuccessUrl);
+
+        $order->refresh();
+        $this->assertSame('paid', $order->payment_status);
+    }
+
     private function createPendingSumUpOrder(array $overrides = []): Order
     {
         $order = new Order;

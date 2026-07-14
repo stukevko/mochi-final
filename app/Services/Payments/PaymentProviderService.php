@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\PaymentGateway;
 use App\Support\PaymentOrderVerifier;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\StripeClient;
@@ -174,6 +175,13 @@ class PaymentProviderService
             ]);
 
         if (! $response->successful()) {
+            Log::channel('checkout_stack')->error('sumup.checkout.create_failed', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $response->status(),
+                'body' => $response->json() ?? $response->body(),
+            ]);
+
             throw new RuntimeException('SumUp Checkout konnte nicht initialisiert werden.');
         }
 
@@ -191,6 +199,37 @@ class PaymentProviderService
         }
 
         return $url;
+    }
+
+    /**
+     * SumUp can redirect back before the checkout status flips to PAID — poll briefly.
+     *
+     * @return array{paid: bool, transaction_id: string|null, status: string|null}
+     */
+    public function verifySumUpCheckoutWithRetry(
+        string $checkoutId,
+        Order $order,
+        int $maxAttempts = 5,
+        int $delayMs = 500,
+    ): array {
+        $result = ['paid' => false, 'transaction_id' => null, 'status' => null];
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $result = $this->verifySumUpCheckout($checkoutId, $order);
+
+            if ($result['paid']) {
+                return $result;
+            }
+
+            $status = strtoupper((string) ($result['status'] ?? ''));
+            if ($status !== 'PENDING' || $attempt === $maxAttempts) {
+                return $result;
+            }
+
+            usleep($delayMs * 1000);
+        }
+
+        return $result;
     }
 
     /**

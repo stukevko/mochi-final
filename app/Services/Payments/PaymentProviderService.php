@@ -29,7 +29,7 @@ class PaymentProviderService
                     'currency' => $currency,
                     'unit_amount' => (int) round(((float) $item->unit_price) * 100),
                     'product_data' => [
-                        'name' => $item->product_name . (filled($item->variant_name) ? ' ('.$item->variant_name.')' : ''),
+                        'name' => $item->product_name.(filled($item->variant_name) ? ' ('.$item->variant_name.')' : ''),
                     ],
                 ],
                 'quantity' => (int) $item->quantity,
@@ -158,6 +158,8 @@ class PaymentProviderService
             throw new RuntimeException('SumUp ist nicht konfiguriert (SUMUP_TOKEN / SUMUP_MERCHANT_CODE fehlen).');
         }
 
+        $returnUrl = route('payment.return', ['provider' => 'sumup', 'order' => $order->id]);
+
         $response = Http::withToken($credentials['token'])
             ->acceptJson()
             ->post('https://api.sumup.com/v0.1/checkouts', [
@@ -166,7 +168,8 @@ class PaymentProviderService
                 'currency' => strtoupper((string) ($order->currency ?: 'EUR')),
                 'merchant_code' => $credentials['merchant_code'],
                 'description' => 'Bestellung '.$order->order_number,
-                'return_url' => route('payment.return', ['provider' => 'sumup', 'order' => $order->id]),
+                'return_url' => $returnUrl,
+                'redirect_url' => $returnUrl,
                 'hosted_checkout' => ['enabled' => true],
             ]);
 

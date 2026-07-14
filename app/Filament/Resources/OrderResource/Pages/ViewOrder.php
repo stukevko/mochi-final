@@ -5,7 +5,6 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource;
 use App\Mail\OrderShipped;
 use App\Models\Order;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -84,18 +83,7 @@ class ViewOrder extends ViewRecord
             Actions\Action::make('download_invoice')
                 ->label('Rechnung herunterladen')
                 ->icon('heroicon-o-document-arrow-down')
-                ->action(function () {
-                    $record = $this->getRecord();
-                    $record->loadMissing('items');
-                    $pdf = Pdf::loadView('pdf.invoice', ['order' => $record]);
-
-                    return response()->streamDownload(
-                        function () use ($pdf): void {
-                            echo $pdf->output();
-                        },
-                        'rechnung-'.$record->order_number.'.pdf'
-                    );
-                }),
+                ->url(fn (): string => route('admin.orders.invoice', $this->getRecord())),
 
             Actions\EditAction::make(),
         ];

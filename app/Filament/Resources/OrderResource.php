@@ -7,7 +7,6 @@ use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Mail\OrderShipped;
 use App\Models\Order;
 use App\Support\MoneyFormatter;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -557,17 +556,7 @@ class OrderResource extends Resource
                     ->label('Rechnung herunterladen')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
-                    ->action(function ($record) {
-                        $record->loadMissing('items');
-                        $pdf = Pdf::loadView('pdf.invoice', ['order' => $record]);
-
-                        return response()->streamDownload(
-                            function () use ($pdf): void {
-                                echo $pdf->output();
-                            },
-                            'rechnung-'.$record->order_number.'.pdf'
-                        );
-                    }),
+                    ->url(fn (Order $record): string => route('admin.orders.invoice', $record)),
 
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),

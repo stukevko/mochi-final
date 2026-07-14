@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\EventCalendarRescheduleController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\OrderInvoiceController;
 use App\Http\Controllers\PaymentCheckoutController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PostController;
@@ -54,6 +55,9 @@ Route::view('/checkout', 'pages.checkout')->name('checkout');
 Route::get('/checkout/success/{orderNumber}', fn (string $orderNumber) => view('pages.checkout-success', ['orderNumber' => $orderNumber]))
     ->middleware('signed')
     ->name('checkout.success');
+Route::get('/checkout/success/{orderNumber}/invoice', [OrderInvoiceController::class, 'forCheckoutSuccess'])
+    ->middleware('signed')
+    ->name('checkout.invoice');
 Route::get('/checkout/return/{provider}/{order}', [PaymentCheckoutController::class, 'returnFromProvider'])->name('payment.return');
 Route::get('/checkout/cancel/{provider}/{order}', [PaymentCheckoutController::class, 'cancelFromProvider'])->name('payment.cancel');
 Route::post('/webhooks/payment/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.payment.stripe');
@@ -93,6 +97,9 @@ Route::view('/datenschutz', 'pages.legal-datenschutz')->name('legal.datenschutz'
 Route::view('/widerruf', 'pages.legal-widerruf')->name('legal.widerruf');
 
 Route::middleware(['web', 'auth', 'admin'])->group(function (): void {
+    Route::get('admin/orders/{order}/invoice', [OrderInvoiceController::class, 'forAdmin'])
+        ->name('admin.orders.invoice');
+
     Route::post('admin-calendar/events/{id}/reschedule', EventCalendarRescheduleController::class)
         ->name('admin.calendar.event-reschedule');
 });

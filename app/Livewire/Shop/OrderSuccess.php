@@ -4,6 +4,7 @@ namespace App\Livewire\Shop;
 
 use App\Models\Order;
 use App\Support\MoneyFormatter;
+use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -34,6 +35,15 @@ class OrderSuccess extends Component
     public function formatMoney(float|string $amount): string
     {
         return MoneyFormatter::format((float) $amount);
+    }
+
+    public function invoiceDownloadUrl(): string
+    {
+        return URL::temporarySignedRoute(
+            'checkout.invoice',
+            now()->addDays(7),
+            ['orderNumber' => $this->orderNumber],
+        );
     }
 
     public function render()

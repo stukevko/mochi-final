@@ -47,6 +47,11 @@
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
             Deine Rechnung wurde dir soeben per E-Mail zugestellt.
         </p>
+        @if (session('invoice_error'))
+            <p class="mx-auto mt-4 max-w-xl rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
+                {{ session('invoice_error') }}
+            </p>
+        @endif
         <p class="mt-2 text-sm text-mochi-muted">
             Bestellnummer
             <span class="font-semibold text-white">{{ $order->order_number }}</span>
@@ -113,6 +118,15 @@
     </div>
 
     <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a
+            href="{{ $this->invoiceDownloadUrl() }}"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-mochi-text transition hover:border-mochi-accent/35 hover:bg-mochi-accent/10 sm:w-auto"
+        >
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" />
+            </svg>
+            Rechnung herunterladen
+        </a>
         <a
             href="{{ route('shop') }}"
             wire:navigate

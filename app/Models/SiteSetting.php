@@ -57,28 +57,51 @@ class SiteSetting extends Model
         ];
     }
 
+    private const CURRENT_ID_CACHE_KEY = 'site_setting.current.id.v2';
+
     public static function current(): self
     {
-        return Cache::rememberForever('site_setting.current.v1', function (): self {
-            return static::query()->first()
-                ?? static::query()->create([
-                    'instagram_url' => config('mochicards.instagram_url'),
-                    'background_animations' => true,
-                ]);
+        $id = Cache::rememberForever(self::CURRENT_ID_CACHE_KEY, function (): int {
+            return static::resolveCurrentRow()->getKey();
         });
+
+        $setting = static::query()->find($id);
+
+        if ($setting === null) {
+            static::forgetCurrentCache();
+
+            return static::resolveCurrentRow();
+        }
+
+        return $setting;
     }
 
     protected static function booted(): void
     {
         static::saved(function (): void {
-            Cache::forget('site_setting.current.v1');
+            static::forgetCurrentCache();
             \App\Support\StorefrontLayoutCache::forget();
         });
 
         static::deleted(function (): void {
-            Cache::forget('site_setting.current.v1');
+            static::forgetCurrentCache();
             \App\Support\StorefrontLayoutCache::forget();
         });
+    }
+
+    public static function forgetCurrentCache(): void
+    {
+        Cache::forget(self::CURRENT_ID_CACHE_KEY);
+        Cache::forget('site_setting.current.v1');
+    }
+
+    private static function resolveCurrentRow(): self
+    {
+        return static::query()->first()
+            ?? static::query()->create([
+                'instagram_url' => config('mochicards.instagram_url'),
+                'background_animations' => true,
+            ]);
     }
 
     /**

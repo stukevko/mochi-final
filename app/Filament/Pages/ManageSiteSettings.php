@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\SiteSetting;
 use App\Support\BenefitTileIcons;
 use App\Support\FeaturedProductImageOptimizer;
+use App\Support\SecureUrl;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -198,11 +199,11 @@ class ManageSiteSettings extends Page
                                 if (filled($path)) {
                                     $p = (string) $path;
                                     if (str_starts_with($p, 'http://') || str_starts_with($p, 'https://')) {
-                                        $imageUrl = $p;
+                                        $imageUrl = SecureUrl::upgrade($p);
                                     } elseif (Storage::disk('public')->exists($p)) {
-                                        $imageUrl = Storage::disk('public')->url($p);
+                                        $imageUrl = SecureUrl::upgrade(Storage::disk('public')->url($p));
                                     } elseif (is_file(public_path($p))) {
-                                        $imageUrl = asset($p);
+                                        $imageUrl = SecureUrl::upgrade(asset($p));
                                     }
                                 }
 

@@ -25,16 +25,16 @@ class ShopBranding
     {
         $uploaded = Setting::get('logo_path');
         if (is_string($uploaded) && $uploaded !== '' && Storage::disk('public')->exists($uploaded)) {
-            return Storage::disk('public')->url($uploaded);
+            return (string) SecureUrl::upgrade(Storage::disk('public')->url($uploaded));
         }
 
         $site = SiteSetting::query()->first();
         $hero = $site?->hero_logo_path;
         if (is_string($hero) && $hero !== '' && Storage::disk('public')->exists($hero)) {
-            return Storage::disk('public')->url($hero);
+            return (string) SecureUrl::upgrade(Storage::disk('public')->url($hero));
         }
 
-        return asset(self::LOGO_PLACEHOLDER);
+        return (string) SecureUrl::upgrade(asset(self::LOGO_PLACEHOLDER));
     }
 
     /**

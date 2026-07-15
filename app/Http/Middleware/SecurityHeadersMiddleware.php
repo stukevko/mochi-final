@@ -28,13 +28,15 @@ class SecurityHeadersMiddleware
 
             $scriptSrc = ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'blob:', 'https://challenges.cloudflare.com'];
             $styleSrc = ["'self'", "'unsafe-inline'", 'https:', 'https://fonts.bunny.net', 'https://fonts.googleapis.com'];
-            $connectSrc = ["'self'", 'https:', 'ws:', 'wss:'];
+            // Kein ws: in Production — unsichere WebSockets wären Active Mixed Content.
+            $connectSrc = ["'self'", 'https:', 'wss:'];
             $frameSrc = ["'self'", 'https://www.google.com', 'https://maps.google.com', 'https://challenges.cloudflare.com'];
 
             if ($viteDev !== null) {
                 $scriptSrc[] = $viteDev;
                 $styleSrc[] = $viteDev;
                 $connectSrc[] = $viteDev;
+                $connectSrc[] = 'ws:';
             }
 
             $csp = [
@@ -48,10 +50,9 @@ class SecurityHeadersMiddleware
                 'script-src '.implode(' ', $scriptSrc),
                 'style-src '.implode(' ', $styleSrc),
                 'frame-src '.implode(' ', $frameSrc),
+                // Immer in Production: upgradet restliche http://-Ressourcen automatisch.
+                'upgrade-insecure-requests',
             ];
-            if ($request->secure()) {
-                $csp[] = 'upgrade-insecure-requests';
-            }
             $response->headers->set('Content-Security-Policy', implode('; ', $csp));
         }
 

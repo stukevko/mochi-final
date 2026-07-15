@@ -9,6 +9,7 @@ use App\Models\ShopLink;
 use App\Models\SiteSetting;
 use App\Support\BenefitTileIcons;
 use App\Support\MoneyFormatter;
+use App\Support\SecureUrl;
 use App\Support\ShopBranding;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -177,7 +178,7 @@ class HomeController extends Controller
         }
         $imagePath = trim($imagePath);
         if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
-            return $imagePath;
+            return SecureUrl::upgrade($imagePath);
         }
         if (Storage::disk('public')->exists($imagePath)) {
             return Storage::disk('public')->url($imagePath);

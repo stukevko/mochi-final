@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SecurityHeadersMiddleware::class);
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'signed' => \App\Http\Middleware\ValidateSignature::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhooks/payment/*',

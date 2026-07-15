@@ -35,18 +35,30 @@ class SumUpCheckoutRedirectTest extends TestCase
 
         $this->assertSame('https://checkout.sumup.com/pay/sumup-checkout-abc', $url);
 
-        $expectedReturnUrl = route('payment.return', ['provider' => 'sumup', 'order' => $order->id]);
-
-        Http::assertSent(function ($request) use ($expectedReturnUrl): bool {
+        Http::assertSent(function ($request) use ($order): bool {
             if ($request->url() !== 'https://api.sumup.com/v0.1/checkouts') {
                 return false;
             }
 
             $payload = $request->data();
+            $returnUrl = $payload['redirect_url'] ?? null;
 
-            return ($payload['redirect_url'] ?? null) === $expectedReturnUrl
-                && ($payload['return_url'] ?? null) === $expectedReturnUrl
-                && ($payload['hosted_checkout']['enabled'] ?? false) === true;
+            if (! is_string($returnUrl) || ($payload['return_url'] ?? null) !== $returnUrl) {
+                return false;
+            }
+
+            if (($payload['hosted_checkout']['enabled'] ?? false) !== true) {
+                return false;
+            }
+
+            if (! str_contains($returnUrl, '/checkout/return/sumup/'.$order->id)
+                || ! str_contains($returnUrl, 'signature=')) {
+                return false;
+            }
+
+            $signatureRequest = \Illuminate\Http\Request::create($returnUrl, 'GET');
+
+            return $signatureRequest->hasValidSignatureWhileIgnoring(['checkout_id']);
         });
     }
 
@@ -73,10 +85,11 @@ class SumUpCheckoutRedirectTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get(route('payment.return', [
-            'provider' => 'sumup',
-            'order' => $order->id,
-        ]).'?checkout_id=sumup-checkout-abc');
+        $response = $this->get(URL::temporarySignedRoute(
+            'payment.return',
+            now()->addDay(),
+            ['provider' => 'sumup', 'order' => $order->id],
+        ).'&checkout_id=sumup-checkout-abc');
 
         $expectedSuccessUrl = URL::temporarySignedRoute(
             'checkout.success',
@@ -117,10 +130,11 @@ class SumUpCheckoutRedirectTest extends TestCase
             ]),
         ]);
 
-        $this->get(route('payment.return', [
-            'provider' => 'sumup',
-            'order' => $order->id,
-        ]).'?checkout_id=sumup-checkout-abc')
+        $this->get(URL::temporarySignedRoute(
+            'payment.return',
+            now()->addDay(),
+            ['provider' => 'sumup', 'order' => $order->id],
+        ).'&checkout_id=sumup-checkout-abc')
             ->assertRedirect();
 
         $this->assertSame([], app(CartService::class)->getRawLines());
@@ -159,10 +173,11 @@ class SumUpCheckoutRedirectTest extends TestCase
                 ->push($paidPayload),
         ]);
 
-        $response = $this->get(route('payment.return', [
-            'provider' => 'sumup',
-            'order' => $order->id,
-        ]).'?checkout_id=sumup-checkout-abc');
+        $response = $this->get(URL::temporarySignedRoute(
+            'payment.return',
+            now()->addDay(),
+            ['provider' => 'sumup', 'order' => $order->id],
+        ).'&checkout_id=sumup-checkout-abc');
 
         $expectedSuccessUrl = URL::temporarySignedRoute(
             'checkout.success',

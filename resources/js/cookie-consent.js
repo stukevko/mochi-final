@@ -125,9 +125,12 @@ function bindConsentControls() {
         button.addEventListener('click', requestOptionalMaps);
     });
 
-    const formRoot = document.querySelector('[data-consent-turnstile]');
-    if (formRoot) {
+    document.querySelectorAll('[data-consent-turnstile]').forEach((formRoot) => {
         formRoot.addEventListener('focusin', ensureTurnstile, { once: true });
+    });
+
+    if (document.querySelector('[data-consent-turnstile] .cf-turnstile')) {
+        ensureTurnstile();
     }
 }
 

@@ -13,6 +13,7 @@ use App\Models\Setting;
 use App\Services\CartService;
 use App\Services\Inventory\StockService;
 use App\Services\Payments\PaymentProviderService;
+use App\Services\TurnstileVerifier;
 use App\Support\MoneyFormatter;
 use App\Support\ShopErrorLogger;
 use Illuminate\Contracts\Mail\Mailable as MailableContract;
@@ -22,22 +23,34 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
-use Throwable;
 use Livewire\Component;
+use Throwable;
 
 class CheckoutPage extends Component
 {
     public string $first_name = '';
+
     public string $last_name = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public string $street = '';
+
     public string $zip = '';
+
     public string $city = '';
+
     public string $country = 'DE';
+
     public string $notes = '';
+
     public string $payment_method = 'sumup';
+
     public bool $accepted_legal = false;
+
+    public string $turnstileToken = '';
 
     public function mount(): void
     {
@@ -74,13 +87,6 @@ class CheckoutPage extends Component
             'accepted_legal' => 'accepted',
         ]);
 
-        // Preise kommen ausschließlich aus getContent() → Datenbank; keine Request-/Session-Preise vertrauen.
-        $cartItems = $cartService->getContent();
-        if ($cartItems === []) {
-            $this->addError('cart', 'Dein Warenkorb ist leer.');
-            return null;
-        }
-
         $rateKey = 'checkout-place-order:'.sha1((string) (request()->ip() ?? 'unknown'));
 
         if (RateLimiter::tooManyAttempts($rateKey, 5)) {
@@ -92,7 +98,22 @@ class CheckoutPage extends Component
             return null;
         }
 
+        // Auch fehlgeschlagene Turnstile-Versuche zählen — sonst Bypass des Limits.
         RateLimiter::hit($rateKey, 60);
+
+        if (! TurnstileVerifier::verify($this->turnstileToken, request()->ip())) {
+            $this->addError('turnstileToken', 'Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut versuchen.');
+
+            return null;
+        }
+
+        // Preise kommen ausschließlich aus getContent() → Datenbank; keine Request-/Session-Preise vertrauen.
+        $cartItems = $cartService->getContent();
+        if ($cartItems === []) {
+            $this->addError('cart', 'Dein Warenkorb ist leer.');
+
+            return null;
+        }
 
         $allowedMethods = collect($this->paymentMethods)->pluck('code')->all();
         if (! in_array($this->payment_method, $allowedMethods, true)) {

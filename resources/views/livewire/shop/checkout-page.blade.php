@@ -2,7 +2,10 @@
     $coInput = 'mochi-input mt-2 w-full min-h-[52px] rounded-xl px-4 py-3 text-base';
 @endphp
 
-<div class="relative mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 md:pb-10 lg:px-8 lg:py-14">
+<div
+    class="relative mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 md:pb-10 lg:px-8 lg:py-14"
+    x-on:mochi-turnstile.window="$wire.set('turnstileToken', $event.detail.token)"
+>
     <div
         wire:loading.flex
         wire:target="placeOrder"
@@ -49,7 +52,7 @@
         </div>
     @endif
 
-    <form id="checkout-form" wire:submit="placeOrder" class="mt-10 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12">
+    <form id="checkout-form" wire:submit="placeOrder" data-consent-turnstile class="mt-10 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12">
         <div class="space-y-10 lg:col-span-7">
             <section class="mochi-card rounded-2xl border border-white/10 bg-[#080c12]/40 p-6 backdrop-blur-xl sm:p-8">
                 <h2 class="text-lg font-semibold text-white">Kontakt &amp; Lieferadresse</h2>
@@ -306,6 +309,21 @@
                 </div>
 
                 <div class="mt-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                    @if (\App\Services\TurnstileVerifier::siteKey())
+                        <div class="mb-4 border-b border-white/10 pb-4">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-mochi-muted">Sicherheitsprüfung</p>
+                            <p class="mt-1 text-xs text-mochi-muted">Kurz bestätigen, bevor du die Bestellung abschickst.</p>
+                            <div
+                                wire:ignore
+                                class="cf-turnstile mt-3 flex min-h-[65px] justify-start"
+                                data-sitekey="{{ \App\Services\TurnstileVerifier::siteKey() }}"
+                                data-callback="mochiTurnstileCallback"
+                            ></div>
+                            @error('turnstileToken')
+                                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
                     <label class="flex cursor-pointer items-start gap-3">
                         <input
                             type="checkbox"

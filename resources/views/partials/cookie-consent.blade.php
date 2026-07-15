@@ -12,8 +12,8 @@
                 <p id="mochi-cookie-title" class="text-sm font-semibold text-white">Cookies &amp; Datenschutz</p>
                 <p id="mochi-cookie-desc" class="mt-1.5 text-xs leading-relaxed text-mochi-muted sm:text-sm">
                     Wir setzen <strong class="font-medium text-mochi-text">technisch notwendige</strong> Cookies für
-                    Warenkorb, Checkout, Sitzung und Sicherheit (z.&nbsp;B. CSRF). Auf der Kontaktseite nutzen wir
-                    Cloudflare Turnstile gegen Spam (lädt erst bei Formular-Nutzung). Schriftarten werden von unserem
+                    Warenkorb, Checkout, Sitzung und Sicherheit (z.&nbsp;B. CSRF). Beim Checkout und auf der Kontaktseite nutzen wir
+                    Cloudflare Turnstile gegen Missbrauch (lädt bei Formular-Nutzung). Schriftarten werden von unserem
                     Server geladen — dafür ist keine Einwilligung nötig. Mit „Alle akzeptieren“ erlaubst du zusätzlich die
                     eingebettete Google-Maps-Karte. Deine Auswahl speichern wir lokal im Browser. Details in unserer
                     <a href="{{ route('legal.datenschutz') }}" class="font-medium text-mochi-coral underline-offset-2 hover:underline">Datenschutzerklärung</a>.

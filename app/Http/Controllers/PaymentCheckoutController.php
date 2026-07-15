@@ -85,10 +85,17 @@ class PaymentCheckoutController extends Controller
 
         $order->refresh();
 
-        if ($provider === 'sumup' && $order->payment_status !== 'paid') {
+        // Alle Provider: Success-Seite nur nach verifiziertem paid-Status (kein IDOR über Return-URL).
+        if ($order->payment_status !== 'paid') {
+            Log::channel('checkout_stack')->warning('payment.return.not_paid', [
+                'order_id' => $order->id,
+                'provider' => $provider,
+                'payment_status' => $order->payment_status,
+            ]);
+
             return redirect()
                 ->route('checkout')
-                ->with('payment_error', 'Die SumUp-Zahlung konnte nicht bestätigt werden. Bitte erneut versuchen.');
+                ->with('payment_error', 'Die Zahlung wurde nicht bestätigt. Bitte erneut versuchen oder uns kontaktieren.');
         }
 
         session()->flash('shop_toast', [

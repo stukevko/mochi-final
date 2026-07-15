@@ -58,7 +58,14 @@ Route::get('/checkout/success/{orderNumber}', fn (string $orderNumber) => view('
 Route::get('/checkout/success/{orderNumber}/invoice', [OrderInvoiceController::class, 'forCheckoutSuccess'])
     ->middleware('signed')
     ->name('checkout.invoice');
-Route::get('/checkout/return/{provider}/{order}', [PaymentCheckoutController::class, 'returnFromProvider'])->name('payment.return');
+Route::get('/checkout/return/{provider}/{order}', [PaymentCheckoutController::class, 'returnFromProvider'])
+    ->middleware(\Illuminate\Routing\Middleware\ValidateSignature::absolute([
+        'session_id',
+        'token',
+        'PayerID',
+        'checkout_id',
+    ]))
+    ->name('payment.return');
 Route::get('/checkout/cancel/{provider}/{order}', [PaymentCheckoutController::class, 'cancelFromProvider'])->name('payment.cancel');
 Route::post('/webhooks/payment/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.payment.stripe');
 Route::post('/webhooks/payment/paypal', [PaymentWebhookController::class, 'paypal'])->name('webhooks.payment.paypal');

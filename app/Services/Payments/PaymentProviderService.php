@@ -7,6 +7,7 @@ use App\Models\PaymentGateway;
 use App\Support\PaymentOrderVerifier;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\StripeClient;
@@ -37,11 +38,14 @@ class PaymentProviderService
             ];
         }
 
+        // session_id wird nach dem Signieren angehängt und von der signed-Middleware ignoriert.
+        $successUrl = $this->signedPaymentReturnUrl('stripe', $order).'&session_id={CHECKOUT_SESSION_ID}';
+
         $payload = [
             'mode' => 'payment',
             'payment_method_types' => ['card', 'klarna', 'sofort', 'giropay'],
             'line_items' => $lineItems,
-            'success_url' => route('payment.return', ['provider' => 'stripe', 'order' => $order->id]).'?session_id={CHECKOUT_SESSION_ID}',
+            'success_url' => $successUrl,
             'cancel_url' => route('payment.cancel', ['provider' => 'stripe', 'order' => $order->id]),
             'client_reference_id' => (string) $order->id,
             'metadata' => [
@@ -87,7 +91,7 @@ class PaymentProviderService
                     ],
                 ]],
                 'application_context' => [
-                    'return_url' => route('payment.return', ['provider' => 'paypal', 'order' => $order->id]),
+                    'return_url' => $this->signedPaymentReturnUrl('paypal', $order),
                     'cancel_url' => route('payment.cancel', ['provider' => 'paypal', 'order' => $order->id]),
                     'brand_name' => config('app.name'),
                     'user_action' => 'PAY_NOW',
@@ -159,7 +163,7 @@ class PaymentProviderService
             throw new RuntimeException('SumUp ist nicht konfiguriert (SUMUP_TOKEN / SUMUP_MERCHANT_CODE fehlen).');
         }
 
-        $returnUrl = route('payment.return', ['provider' => 'sumup', 'order' => $order->id]);
+        $returnUrl = $this->signedPaymentReturnUrl('sumup', $order);
 
         $response = Http::withToken($credentials['token'])
             ->acceptJson()
@@ -335,6 +339,18 @@ class PaymentProviderService
         }
 
         return (string) ($response->json('id') ?? $paypalOrderId);
+    }
+
+    /**
+     * Signed return URL; provider-specific query params (session_id, token, …) are ignored by middleware.
+     */
+    public function signedPaymentReturnUrl(string $provider, Order $order): string
+    {
+        return URL::temporarySignedRoute(
+            'payment.return',
+            now()->addDay(),
+            ['provider' => $provider, 'order' => $order->id],
+        );
     }
 
     private function getPayPalAccessToken(): string

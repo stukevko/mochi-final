@@ -18,6 +18,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('backup:run --only-db')->dailyAt('03:00');
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        // Hinter nginx/CDN: X-Forwarded-Proto für $request->secure() / URL-Generierung.
+        // Port 80 leitet bei uns per nginx auf HTTPS um (kein PHP auf :80), daher sicher.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_PREFIX
+                | Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
+
         $middleware->web(
             append: [
                 \App\Http\Middleware\BlockStorefrontDuringMaintenance::class,

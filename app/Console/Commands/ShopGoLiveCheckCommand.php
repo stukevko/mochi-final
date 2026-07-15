@@ -28,6 +28,25 @@ class ShopGoLiveCheckCommand extends Command
         $rows[] = $this->row('Security', 'SESSION_SECURE_COOKIE in Production', $secureOk, $secureOk ? 'OK' : 'Secure Cookies fehlen');
         $allOk = $allOk && $secureOk;
 
+        $appUrl = (string) config('app.url', '');
+        $httpsUrlOk = ! app()->environment('production') || str_starts_with($appUrl, 'https://');
+        $rows[] = $this->row(
+            'Security',
+            'APP_URL mit https:// in Production',
+            $httpsUrlOk,
+            $httpsUrlOk ? 'OK' : 'APP_URL muss https://mochi-cards.de (o.ä.) sein — sonst Mixed Content'
+        );
+        $allOk = $allOk && $httpsUrlOk;
+
+        $forceHttpsOk = ! app()->environment('production') || (bool) config('app.force_https', false);
+        $rows[] = $this->row(
+            'Security',
+            'force_https aktiv in Production',
+            $forceHttpsOk,
+            $forceHttpsOk ? 'OK' : 'FORCE_HTTPS=true oder APP_URL=https://… setzen'
+        );
+        $allOk = $allOk && $forceHttpsOk;
+
         $turnstileOk = ! app()->environment('production') || \App\Services\TurnstileVerifier::secretConfigured();
         $rows[] = $this->row('Security', 'Turnstile in Production', $turnstileOk, $turnstileOk ? 'OK' : 'TURNSTILE_SECRET_KEY fehlt');
         $allOk = $allOk && $turnstileOk;

@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,12 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (config('app.force_https', false)) {
-            URL::forceScheme('https');
-        }
-
-        $assetUrl = config('app.asset_url');
-        if (is_string($assetUrl) && $assetUrl !== '') {
-            Vite::useAssetUrl($assetUrl);
+            self::enforceHttpsAbsoluteUrls();
         }
 
         if (Schema::hasTable('products')) {
@@ -169,6 +163,29 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with($data);
         });
+    }
+
+    /**
+     * Absolute URLs (route/url/asset) und Storage/Vite-Basis auf https erzwingen.
+     * Verhindert Mixed Content, wenn APP_URL noch http:// enthält oder gecacht wurde.
+     */
+    public static function enforceHttpsAbsoluteUrls(): void
+    {
+        URL::forceScheme('https');
+
+        $publicDiskUrl = config('filesystems.disks.public.url');
+        if (is_string($publicDiskUrl) && str_starts_with($publicDiskUrl, 'http://')) {
+            config([
+                'filesystems.disks.public.url' => 'https://'.substr($publicDiskUrl, strlen('http://')),
+            ]);
+        }
+
+        $assetUrl = config('app.asset_url');
+        if (is_string($assetUrl) && str_starts_with($assetUrl, 'http://')) {
+            config([
+                'app.asset_url' => 'https://'.substr($assetUrl, strlen('http://')),
+            ]);
+        }
     }
 
     private static function legalHtmlWithCmsFallback(string $settingKey, ?string $cmsSlug, string $placeholder): string

@@ -124,15 +124,19 @@ php artisan storage:link
 ### Schritt 9 — Live-Server (Kurz-Checkliste)
 
 - **`APP_ENV=production`**, **`APP_DEBUG=false`**
-- **`APP_URL=https://…`** exakt wie im Browser (mit `https://`)
+- **`APP_URL=https://…`** exakt wie im Browser (mit `https://`) — **Pflicht**, sonst erzeugt Laravel Assets/Storage-URLs als `http://` → Chrome „Nicht sicher“ (Mixed Content) trotz gültigem Zertifikat
 - **`SESSION_SECURE_COOKIE=true`** — nur sinnvoll **mit HTTPS** (bei reinem `http://` lokal zum Testen ggf. `false`, sonst bleiben Cookies leer)
+- **`FORCE_HTTPS=true`** empfohlen (Redirect); bei `APP_URL=https://…` aktiviert die App HTTPS-URL-Erzeugung zusätzlich automatisch
+- Optional: **`ASSET_URL=https://mochi-cards.de`** (gleicher Host), falls Asset-URLs abweichen
 - Webserver-Dokumentroot auf den Ordner **`public/`** zeigen lassen (Standard bei Laravel)
+- nginx: HTTP→HTTPS-Redirect + HSTS (siehe `deploy/nginx/mochi-cards.de.conf`)
 - Dateirechte: `storage/` und `bootstrap/cache/` beschreibbar
 
 Optional danach Cache frischziehen:
 
 ```bash
 php artisan optimize:clear
+php artisan config:cache
 ```
 
 ---

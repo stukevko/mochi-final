@@ -136,11 +136,14 @@ return [
     | Force HTTPS
     |--------------------------------------------------------------------------
     |
-    | Wenn aktiv, leitet die Middleware alle Web-Requests auf HTTPS um und
-    | AppServiceProvider setzt die URL-Scheme-Erzeugung auf https.
+    | Wenn aktiv, leitet ForceHttps alle Web-Requests auf HTTPS um und
+    | AppServiceProvider erzeugt absolute URLs/Assets mit https.
+    | Automatisch true, wenn APP_URL mit https:// beginnt (Production).
+    | FORCE_HTTPS=false in .env wird korrekt als false gelesen (nicht (bool)"false").
     |
     */
 
-    'force_https' => (bool) env('FORCE_HTTPS', false),
+    'force_https' => filter_var(env('FORCE_HTTPS', false), FILTER_VALIDATE_BOOLEAN)
+        || str_starts_with((string) env('APP_URL', ''), 'https://'),
 
 ];

@@ -87,7 +87,7 @@ class ManageSystemServices extends Page
                     ->schema([
                         Forms\Components\Placeholder::make('mail_hint')
                             ->label('Hinweis')
-                            ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) wird auf dem Server per .env konfiguriert (MAIL_MAILER, MAIL_HOST, …). Bei Problemen wenden Sie sich an Ihre Hosting-Firma oder Agentur.'),
+                            ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) wird auf dem Server per .env konfiguriert: MAIL_MAILER=resend (mit RESEND_API_KEY) oder smtp (MAIL_HOST, …). Absender-Domain muss beim Anbieter verifiziert sein. Test: php artisan shop:test-mail.'),
                     ]),
 
                 Section::make('Vorkasse / Überweisung')

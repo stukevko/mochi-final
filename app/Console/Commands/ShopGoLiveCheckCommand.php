@@ -74,6 +74,24 @@ class ShopGoLiveCheckCommand extends Command
         $rows[] = $this->row('Mail', 'Kein log-Mailer', $mailOk, $mailDriver === '' ? 'mail.default leer' : 'mail.default='.$mailDriver);
         $allOk = $allOk && $mailOk;
 
+        if ($mailDriver === 'resend') {
+            $resendKey = (string) config('services.resend.key', '');
+            $resendOk = $resendKey !== '';
+            $rows[] = $this->row('Mail', 'RESEND_API_KEY gesetzt', $resendOk, $resendOk ? 'OK' : 'RESEND_API_KEY fehlt');
+            $allOk = $allOk && $resendOk;
+        }
+
+        $fromAddress = (string) config('mail.from.address', '');
+        $fromOk = $fromAddress !== '' && filter_var($fromAddress, FILTER_VALIDATE_EMAIL)
+            && ! str_contains(strtolower($fromAddress), 'example.com');
+        $rows[] = $this->row(
+            'Mail',
+            'MAIL_FROM_ADDRESS produktiv',
+            $fromOk,
+            $fromOk ? $fromAddress : 'echte Absender-Adresse setzen (Domain bei Resend/SMTP verifizieren)'
+        );
+        $allOk = $allOk && $fromOk;
+
         $webhooksOk = $this->checkWebhookCsrfExclusion();
         $rows[] = $this->row('Webhooks', '/webhooks/payment/* CSRF-frei', $webhooksOk['ok'], $webhooksOk['detail']);
         $allOk = $allOk && $webhooksOk['ok'];

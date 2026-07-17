@@ -87,7 +87,7 @@ class ManageSystemServices extends Page
                     ->schema([
                         Forms\Components\Placeholder::make('mail_hint')
                             ->label('Hinweis')
-                            ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) wird auf dem Server per .env konfiguriert: MAIL_MAILER=resend (mit RESEND_API_KEY) oder smtp (MAIL_HOST, …). Absender-Domain muss beim Anbieter verifiziert sein. Test: php artisan shop:test-mail.'),
+                            ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) läuft über die Server-.env: empfohlen lokaler Postfix (MAIL_MAILER=smtp, MAIL_HOST=127.0.0.1, Port 25, Absender noreply-mochi@nexvalue.de). Alternativ sendmail oder optional Resend (RESEND_API_KEY). SPF/DKIM für nexvalue.de setzen. Test: php artisan shop:test-mail.'),
                     ]),
 
                 Section::make('Vorkasse / Überweisung')

@@ -10,7 +10,7 @@ class ShopTestMailCommand extends Command
 {
     protected $signature = 'shop:test-mail {email? : Empfänger (Standard: erste gültige aus order_notification_email / SHOP_ORDER_NOTIFICATION_EMAIL)}';
 
-    protected $description = 'Sendet eine Test-E-Mail mit dem aktuellen MAIL_MAILER (log/smtp/resend)';
+    protected $description = 'Sendet eine Test-E-Mail mit dem aktuellen MAIL_MAILER (log/smtp/sendmail/resend)';
 
     public function handle(): int
     {
@@ -41,6 +41,8 @@ class ShopTestMailCommand extends Command
             $this->warn('MAIL_MAILER=log — Nachricht steht in storage/logs/laravel.log, nicht im Posteingang.');
         } elseif ($mailer === 'resend' && blank(config('services.resend.key'))) {
             $this->warn('RESEND_API_KEY fehlt — Versand wird sehr wahrscheinlich fehlschlagen.');
+        } elseif (in_array($mailer, ['smtp', 'sendmail'], true)) {
+            $this->info('Versand ausgelöst (Postfix/SMTP/sendmail). Prüfe Posteingang, Spam und mail.log auf der VM.');
         } else {
             $this->info('Versand ausgelöst. Prüfe den Posteingang (und Spam).');
         }

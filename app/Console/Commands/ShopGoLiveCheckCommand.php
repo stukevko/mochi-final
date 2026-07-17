@@ -112,6 +112,17 @@ class ShopGoLiveCheckCommand extends Command
         );
         $allOk = $allOk && $fromOk;
 
+        $queueConnection = strtolower((string) config('queue.default', 'sync'));
+        $queueIsSync = $queueConnection === 'sync' || $queueConnection === '';
+        $rows[] = $this->row(
+            'Queue',
+            'QUEUE_CONNECTION=sync oder Worker laeuft',
+            true,
+            $queueIsSync
+                ? 'sync (Bestellmails gehen sofort; kein Worker noetig)'
+                : $queueConnection.' — Bestellmails sind sendNow (OK); andere Jobs (z. B. OrderShipped) brauchen `php artisan queue:work`'
+        );
+
         $webhooksOk = $this->checkWebhookCsrfExclusion();
         $rows[] = $this->row('Webhooks', '/webhooks/payment/* CSRF-frei', $webhooksOk['ok'], $webhooksOk['detail']);
         $allOk = $allOk && $webhooksOk['ok'];

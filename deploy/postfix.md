@@ -112,10 +112,12 @@ PTR/rDNS der Server-IP sollte zum EHLO-Hostname passen (bessere Zustellung).
 # Rohtest Postfix
 echo "Postfix OK" | mail -s "Postfix test" deine@mail.de
 
-# Laravel
+# Laravel (Bestellmails gehen synchron per sendNow — kein Queue-Worker nötig dafür)
 cd /var/www/mochi-cards
 php artisan shop:test-mail deine@mail.de
 php artisan shop:go-live-check
 ```
 
 Logs bei Problemen: `/var/log/mail.log` bzw. `journalctl -u postfix -e`.
+
+**Hinweis:** In `.env` idealerweise `QUEUE_CONNECTION=sync`. Bei `database`/`redis` ohne Worker kommen andere Jobs (z. B. Versandmail `OrderShipped`) nicht an — Bestellbestätigung aber schon (seit `sendNow`-Fix).

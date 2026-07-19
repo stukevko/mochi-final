@@ -17,7 +17,6 @@ use App\Services\TurnstileVerifier;
 use App\Support\MoneyFormatter;
 use App\Support\ShopErrorLogger;
 use Illuminate\Contracts\Mail\Mailable as MailableContract;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -405,20 +404,9 @@ class CheckoutPage extends Component
 
     protected function sendOrderMail(string $recipient, MailableContract $mail): void
     {
-        if ($mail instanceof ShouldQueue && $this->canQueueMail()) {
-            Mail::to($recipient)->later(now()->addSeconds(2), $mail);
-
-            return;
-        }
-
-        Mail::to($recipient)->send($mail);
-    }
-
-    protected function canQueueMail(): bool
-    {
-        $queueConnection = (string) config('queue.default', 'sync');
-
-        return $queueConnection !== '' && strtolower($queueConnection) !== 'sync';
+        // Immer synchron: OrderConfirmed/AdminOrderNotification sind ShouldQueue —
+        // Mail::send()/later() landen sonst in jobs und kommen ohne Worker nie an.
+        Mail::to($recipient)->sendNow($mail);
     }
 
     protected function isOnlinePaymentMethod(string $method): bool

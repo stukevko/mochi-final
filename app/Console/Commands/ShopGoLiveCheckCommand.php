@@ -74,6 +74,55 @@ class ShopGoLiveCheckCommand extends Command
         $rows[] = $this->row('Mail', 'Kein log-Mailer', $mailOk, $mailDriver === '' ? 'mail.default leer' : 'mail.default='.$mailDriver);
         $allOk = $allOk && $mailOk;
 
+        if ($mailDriver === 'smtp') {
+            $smtpHost = strtolower((string) config('mail.mailers.smtp.host', ''));
+            $smtpPort = (int) config('mail.mailers.smtp.port', 0);
+            $isLocalPostfix = in_array($smtpHost, ['127.0.0.1', 'localhost', '::1'], true);
+            $smtpOk = $smtpHost !== '';
+            $smtpDetail = $isLocalPostfix
+                ? sprintf('Postfix/local SMTP %s:%d', $smtpHost !== '' ? $smtpHost : '?', $smtpPort ?: 25)
+                : sprintf('SMTP %s:%d', $smtpHost !== '' ? $smtpHost : '(leer)', $smtpPort);
+            $rows[] = $this->row('Mail', 'SMTP-Host konfiguriert', $smtpOk, $smtpOk ? $smtpDetail : 'MAIL_HOST fehlt');
+            $allOk = $allOk && $smtpOk;
+        } elseif ($mailDriver === 'sendmail') {
+            $sendmailPath = (string) config('mail.mailers.sendmail.path', '');
+            $sendmailOk = $sendmailPath !== '';
+            $rows[] = $this->row(
+                'Mail',
+                'sendmail-Pfad gesetzt',
+                $sendmailOk,
+                $sendmailOk ? $sendmailPath : 'MAIL_SENDMAIL_PATH fehlt'
+            );
+            $allOk = $allOk && $sendmailOk;
+        } elseif ($mailDriver === 'resend') {
+            $resendKey = (string) config('services.resend.key', '');
+            $resendOk = $resendKey !== '';
+            $rows[] = $this->row('Mail', 'RESEND_API_KEY gesetzt', $resendOk, $resendOk ? 'OK' : 'RESEND_API_KEY fehlt');
+            $allOk = $allOk && $resendOk;
+        }
+
+        $fromAddress = (string) config('mail.from.address', '');
+        $fromOk = $fromAddress !== '' && filter_var($fromAddress, FILTER_VALIDATE_EMAIL)
+            && ! str_contains(strtolower($fromAddress), 'example.com');
+        $rows[] = $this->row(
+            'Mail',
+            'MAIL_FROM_ADDRESS produktiv',
+            $fromOk,
+            $fromOk ? $fromAddress : 'echte Absender-Adresse setzen (z. B. noreply-mochi@nexvalue.de; SPF/DKIM für nexvalue.de)'
+        );
+        $allOk = $allOk && $fromOk;
+
+        $queueConnection = strtolower((string) config('queue.default', 'sync'));
+        $queueIsSync = $queueConnection === 'sync' || $queueConnection === '';
+        $rows[] = $this->row(
+            'Queue',
+            'QUEUE_CONNECTION=sync oder Worker laeuft',
+            true,
+            $queueIsSync
+                ? 'sync (Bestellmails gehen sofort; kein Worker noetig)'
+                : $queueConnection.' — Bestellmails sind sendNow (OK); andere Jobs (z. B. OrderShipped) brauchen `php artisan queue:work`'
+        );
+
         $webhooksOk = $this->checkWebhookCsrfExclusion();
         $rows[] = $this->row('Webhooks', '/webhooks/payment/* CSRF-frei', $webhooksOk['ok'], $webhooksOk['detail']);
         $allOk = $allOk && $webhooksOk['ok'];

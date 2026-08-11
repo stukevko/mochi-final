@@ -6,8 +6,10 @@ use App\Enums\EventStatus;
 use App\Enums\GameType;
 use App\Filament\Resources\Events\Schemas\EventForm;
 use App\Models\Event;
+use App\Services\Events\RecurringEventService;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
@@ -44,8 +46,44 @@ class EventCalendarPage extends Page
                 $schema->model(Event::class)->operation('edit')
             ))
             ->action(function (array $data, Event $record): void {
-                unset($data['allow_slug_edit']);
+                $syncSeries = (bool) ($data['sync_series_content'] ?? false);
+                unset($data['allow_slug_edit'], $data['sync_series_content']);
+
+                if ($record->isSeriesChild()) {
+                    unset($data['recurrence'], $data['recurrence_until'], $data['parent_event_id']);
+                }
+
+                if ($record->isSeriesRoot()) {
+                    $data['recurrence'] = $record->recurrence?->value;
+                    $data['recurrence_until'] = optional($record->recurrence_until)?->toDateString();
+                }
+
                 $record->update($data);
+                $record = $record->fresh();
+
+                if ($syncSeries && $record->isSeriesRoot()) {
+                    $updated = app(RecurringEventService::class)->syncFutureChildren($record);
+                    if ($updated > 0) {
+                        Notification::make()
+                            ->title('Serie aktualisiert')
+                            ->body($updated.' zukünftige Termine übernommen.')
+                            ->success()
+                            ->send();
+                    }
+                }
+
+                if ($record->parent_event_id === null
+                    && $record->recurrence?->isRepeating()
+                    && $record->children()->doesntExist()) {
+                    $created = app(RecurringEventService::class)->expandSeries($record);
+                    if ($created !== []) {
+                        Notification::make()
+                            ->title('Serie angelegt')
+                            ->body((count($created) + 1).' Termine im Kalender.')
+                            ->success()
+                            ->send();
+                    }
+                }
             })
             ->successNotificationTitle('Event gespeichert.');
     }
@@ -86,8 +124,12 @@ class EventCalendarPage extends Page
                     'extendedProps' => [
                         'hint' => $event->gameTypeLabel(),
                         'archived' => $isArchived,
+                        'series' => $event->isSeriesRoot() || $event->isSeriesChild(),
                     ],
-                    'classNames' => $isArchived ? ['mochi-fc-event-archived'] : [],
+                    'classNames' => array_values(array_filter([
+                        $isArchived ? 'mochi-fc-event-archived' : null,
+                        ($event->isSeriesRoot() || $event->isSeriesChild()) ? 'mochi-fc-event-series' : null,
+                    ])),
                 ];
             })->values()->all(),
             'gameLegend' => $legend,

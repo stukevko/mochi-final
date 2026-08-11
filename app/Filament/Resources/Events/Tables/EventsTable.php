@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Events\Tables;
 
+use App\Enums\EventRecurrence;
 use App\Enums\EventStatus;
 use App\Enums\GameType;
 use App\Models\Event;
@@ -35,6 +36,22 @@ class EventsTable
                     ->label('Start')
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
+                TextColumn::make('recurrence')
+                    ->label('Serie')
+                    ->badge()
+                    ->formatStateUsing(function (?EventRecurrence $state, Event $record): string {
+                        if ($record->isSeriesChild()) {
+                            return 'Serien-Termin';
+                        }
+                        if ($record->isSeriesRoot()) {
+                            return $state?->label() ?? 'Serie';
+                        }
+
+                        return '—';
+                    })
+                    ->color(fn (Event $record): string => $record->isSeriesChild() || $record->isSeriesRoot()
+                        ? 'info'
+                        : 'gray'),
                 TextColumn::make('game_type')
                     ->label('Spielart')
                     ->formatStateUsing(fn (mixed $state, Event $record): string => $record->gameTypeLabel())

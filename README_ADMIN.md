@@ -154,6 +154,7 @@ php artisan config:cache
 - **Drag & Drop:** Im Admin-Kalender kannst du Termine einfach verschieben.
 - **Slide-over:** Klick auf ein Event öffnet die Bearbeitung rechts, ohne die Seite zu verlassen.
 - **Farben:** Jede Spielart (Pokémon, Magic etc.) hat ihre Farbe. Sonderfarben sind manuell wählbar. **Eigene Spielarten** kannst du mit der Option „Eigene Spielart“ samt freiem Namen anlegen.
+- **Wiederholung:** Beim Anlegen kannst du **wöchentlich / alle 2 Wochen / monatlich** wählen und ein Enddatum setzen. Es werden einzelne Termine erzeugt (max. 52). Ein Termin der Serie lässt sich separat verschieben; am Serien-Start kannst du Inhalte auf **zukünftige** Termine übernehmen. Löschen des Serien-Starts entfernt die ganze Serie.
 
 ---
 

@@ -2,11 +2,16 @@
 
 namespace App\Filament\Resources\Events\Schemas;
 
+use App\Enums\EventRecurrence;
 use App\Enums\EventStatus;
 use App\Enums\GameType;
+use App\Models\Event;
+use App\Services\Events\RecurringEventService;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +19,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class EventForm
@@ -61,7 +67,8 @@ class EventForm
                         DateTimePicker::make('starts_at')
                             ->label('Datum & Uhrzeit')
                             ->required()
-                            ->native(false),
+                            ->native(false)
+                            ->helperText('Bei Serien: erster Termin der Wiederholung.'),
                         TextInput::make('price')
                             ->label('Preis')
                             ->numeric()
@@ -98,6 +105,69 @@ class EventForm
                             ->native(false),
                     ])
                     ->columns(2),
+
+                Section::make('Wiederholung')
+                    ->description('Serie wird als einzelne Termine angelegt (max. '.RecurringEventService::MAX_OCCURRENCES.'). Ideal für wöchentliche Drafts & Spieltische.')
+                    ->schema([
+                        Placeholder::make('series_child_hint')
+                            ->label('')
+                            ->content(function (?Event $record): HtmlString {
+                                if (! $record?->isSeriesChild()) {
+                                    return new HtmlString('');
+                                }
+
+                                $parent = $record->parent;
+                                $label = $parent
+                                    ? e($parent->title).' ('.e(optional($parent->starts_at)->format('d.m.Y H:i')).')'
+                                    : 'Serie';
+
+                                return new HtmlString(
+                                    '<p class="text-sm text-gray-500 dark:text-gray-400">'
+                                    .'Dieser Termin gehört zur Serie <strong>'.$label.'</strong>. '
+                                    .'Änderungen gelten nur für diesen einzelnen Termin (z. B. Ausfall verschieben).'
+                                    .'</p>'
+                                );
+                            })
+                            ->visible(fn (?Event $record): bool => (bool) $record?->isSeriesChild())
+                            ->columnSpanFull(),
+
+                        Select::make('recurrence')
+                            ->label('Wiederholung')
+                            ->options(collect(EventRecurrence::cases())->mapWithKeys(
+                                fn (EventRecurrence $r) => [$r->value => $r->label()]
+                            ))
+                            ->default(EventRecurrence::None->value)
+                            ->required()
+                            ->live()
+                            ->native(false)
+                            ->disabled(fn (?Event $record): bool => (bool) $record?->isSeriesChild())
+                            ->dehydrated(fn (?Event $record): bool => ! $record?->isSeriesChild())
+                            ->helperText(fn (string $operation): ?string => $operation === 'edit'
+                                ? 'Bereits erzeugte Termine bleiben bestehen. Neue Serien bitte über „Event erstellen“ anlegen.'
+                                : null),
+
+                        DatePicker::make('recurrence_until')
+                            ->label('Wiederholen bis')
+                            ->native(false)
+                            ->visible(fn (Get $get, ?Event $record): bool => ! $record?->isSeriesChild()
+                                && EventRecurrence::tryFrom((string) $get('recurrence'))?->isRepeating())
+                            ->required(fn (Get $get, ?Event $record): bool => ! $record?->isSeriesChild()
+                                && EventRecurrence::tryFrom((string) $get('recurrence'))?->isRepeating())
+                            ->minDate(fn (Get $get) => $get('starts_at') ?: now())
+                            ->helperText('Letzter möglicher Termin (inkl.). Max. '.RecurringEventService::MAX_OCCURRENCES.' Termine.'),
+
+                        Toggle::make('sync_series_content')
+                            ->label('Titel, Text, Preis & Status auf zukünftige Serien-Termine übernehmen')
+                            ->default(false)
+                            ->dehydrated(false)
+                            ->visible(fn (string $operation, ?Event $record): bool => $operation === 'edit'
+                                && (bool) $record?->isSeriesRoot())
+                            ->helperText('Verschiebt keine Daten — nur Inhalte (Titel, Beschreibung, Preis, Spielart, Bild, Status, Farbe).'),
+                    ])
+                    ->columns(2)
+                    ->collapsed(fn (string $operation, ?Event $record): bool => $operation === 'edit'
+                        && ! $record?->isSeriesRoot()
+                        && ! $record?->isSeriesChild()),
             ]);
     }
 }

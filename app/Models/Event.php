@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use App\Enums\EventRecurrence;
 use App\Enums\EventStatus;
 use App\Enums\GameType;
 use App\Models\Concerns\HasGameTypeDisplay;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
 class Event extends Model
 {
     use HasGameTypeDisplay;
+
     public const FEED_CACHE_KEY = 'events.feed.json';
 
     public function getRouteKeyName(): string
@@ -30,6 +34,9 @@ class Event extends Model
         'slug',
         'description',
         'starts_at',
+        'recurrence',
+        'recurrence_until',
+        'parent_event_id',
         'price',
         'game_type',
         'game_type_other',
@@ -42,10 +49,42 @@ class Event extends Model
     {
         return [
             'starts_at' => 'datetime',
+            'recurrence_until' => 'date',
+            'recurrence' => EventRecurrence::class,
             'price' => 'decimal:2',
             'game_type' => GameType::class,
             'status' => EventStatus::class,
         ];
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_event_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_event_id');
+    }
+
+    public function isSeriesRoot(): bool
+    {
+        return $this->parent_event_id === null
+            && ($this->recurrence?->isRepeating() ?? false);
+    }
+
+    public function isSeriesChild(): bool
+    {
+        return $this->parent_event_id !== null;
+    }
+
+    public function seriesRoot(): ?self
+    {
+        if ($this->isSeriesChild()) {
+            return $this->parent;
+        }
+
+        return $this->isSeriesRoot() ? $this : null;
     }
 
     public function scopeUpcomingActive(Builder $query): Builder

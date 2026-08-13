@@ -107,7 +107,7 @@ class EventForm
                     ->columns(2),
 
                 Section::make('Wiederholung')
-                    ->description('Serie wird als einzelne Termine angelegt (max. '.RecurringEventService::MAX_OCCURRENCES.'). Ideal für wöchentliche Drafts & Spieltische.')
+                    ->description('Direkt unter den Stammdaten: Serie als einzelne Termine anlegen (max. '.RecurringEventService::MAX_OCCURRENCES.'). Ideal für wöchentliche Drafts & Spieltische.')
                     ->schema([
                         Placeholder::make('series_child_hint')
                             ->label('')
@@ -142,9 +142,9 @@ class EventForm
                             ->native(false)
                             ->disabled(fn (?Event $record): bool => (bool) $record?->isSeriesChild())
                             ->dehydrated(fn (?Event $record): bool => ! $record?->isSeriesChild())
-                            ->helperText(fn (string $operation): ?string => $operation === 'edit'
+                            ->helperText(fn (string $operation): string => $operation === 'edit'
                                 ? 'Bereits erzeugte Termine bleiben bestehen. Neue Serien bitte über „Event erstellen“ anlegen.'
-                                : null),
+                                : '„Keine Wiederholung“ = Einzeltermin. Bei Wöchentlich / Alle 2 Wochen / Monatlich erscheint darunter „Wiederholen bis“.'),
 
                         DatePicker::make('recurrence_until')
                             ->label('Wiederholen bis')
@@ -165,6 +165,8 @@ class EventForm
                             ->helperText('Verschiebt keine Daten — nur Inhalte (Titel, Beschreibung, Preis, Spielart, Bild, Status, Farbe).'),
                     ])
                     ->columns(2)
+                    // Beim Anlegen immer ausgeklappt und nicht einklappbar — sonst wirkt das Formular wie „nur Stammdaten“.
+                    ->collapsible(fn (string $operation): bool => $operation === 'edit')
                     ->collapsed(fn (string $operation, ?Event $record): bool => $operation === 'edit'
                         && ! $record?->isSeriesRoot()
                         && ! $record?->isSeriesChild()),

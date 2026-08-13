@@ -154,7 +154,25 @@ php artisan config:cache
 - **Drag & Drop:** Im Admin-Kalender kannst du Termine einfach verschieben.
 - **Slide-over:** Klick auf ein Event öffnet die Bearbeitung rechts, ohne die Seite zu verlassen.
 - **Farben:** Jede Spielart (Pokémon, Magic etc.) hat ihre Farbe. Sonderfarben sind manuell wählbar. **Eigene Spielarten** kannst du mit der Option „Eigene Spielart“ samt freiem Namen anlegen.
-- **Wiederholung:** Beim Anlegen kannst du **wöchentlich / alle 2 Wochen / monatlich** wählen und ein Enddatum setzen. Es werden einzelne Termine erzeugt (max. 52). Ein Termin der Serie lässt sich separat verschieben; am Serien-Start kannst du Inhalte auf **zukünftige** Termine übernehmen. Löschen des Serien-Starts entfernt die ganze Serie.
+- **Wiederholung:** Beim Anlegen nach den Stammdaten die Sektion **„Wiederholung“** (nach unten scrollen). Dort **wöchentlich / alle 2 Wochen / monatlich** wählen und **Wiederholen bis** setzen. Es werden einzelne Termine erzeugt (max. 52). Ein Termin der Serie lässt sich separat verschieben; am Serien-Start kannst du Inhalte auf **zukünftige** Termine übernehmen. Löschen des Serien-Starts entfernt die ganze Serie.
+
+### 🖥️ Live-Deploy: Wiederkehrende Events (VM)
+
+Auf dem Shop-Server (Projektverzeichnis, z. B. `/var/www/mochicards-cms` — Pfad ggf. anpassen):
+
+```bash
+cd /var/www/mochicards-cms
+git fetch origin
+git checkout main
+git pull origin main
+php artisan migrate --force
+php artisan optimize:clear
+# optional, falls PHP-FPM aktiv und alte Views/OPcache hängen:
+sudo systemctl reload php8.3-fpm
+# PHP-Version prüfen: php -v  bzw. ls /etc/php/*/fpm
+```
+
+Danach im Admin **Event erstellen** öffnen und unter den Stammdaten die Sektion **Wiederholung** prüfen. Hard-Refresh im Browser (Ctrl/Cmd+Shift+R), falls noch die alte Seite gecacht ist.
 
 ---
 

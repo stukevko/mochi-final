@@ -35,7 +35,7 @@
     <h2>Vor dem Go-Live</h2>
     <ul>
         <li>SumUp-Zugangsdaten hinterlegen.</li>
-        <li>SMTP für E-Mail-Versand konfigurieren (nicht <code>log</code>).</li>
+        <li>Postfix/SMTP für E-Mail-Versand konfigurieren (nicht <code>log</code>; Absender <code>noreply-mochi@nexvalue.de</code>).</li>
         <li>Rechtstexte finalisieren.</li>
         <li><code>php artisan shop:check-views</code> und <code>shop:go-live-check</code> ausführen.</li>
     </ul>

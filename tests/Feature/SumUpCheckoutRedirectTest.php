@@ -101,6 +101,9 @@ class SumUpCheckoutRedirectTest extends TestCase
 
         $order->refresh();
         $this->assertSame('paid', $order->payment_status);
+        Mail::assertSent(\App\Mail\OrderConfirmed::class);
+        Mail::assertNotQueued(\App\Mail\OrderConfirmed::class);
+        $this->assertNotEmpty(data_get($order->payment_data, 'customer_confirmation_sent_at'));
     }
 
     public function test_sumup_return_clears_cart_when_paid(): void

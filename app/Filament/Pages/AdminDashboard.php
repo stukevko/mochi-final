@@ -18,7 +18,7 @@ class AdminDashboard extends Dashboard
 
     public function getTitle(): string|Htmlable
     {
-        return 'Mochi Admin';
+        return 'Mochi Hub';
     }
 
     /**

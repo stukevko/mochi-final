@@ -33,11 +33,14 @@ const phone = await browser.newContext({ ...devices['iPhone 14'], locale: 'de-DE
 const m = await phone.newPage();
 
 await safe('m-home', async () => { await m.goto(base + '/', { waitUntil: 'networkidle' }); await shot(m, '01-handy-start-mit-cookie-banner'); await dismissCookies(m); await shot(m, '02-handy-start'); });
-await safe('m-shop', async () => { await m.goto(base + '/shop', { waitUntil: 'networkidle' }); await shot(m, '03-handy-shop'); });
+await safe('m-shop', async () => {
+    await m.goto(base + '/shop', { waitUntil: 'networkidle' }); await shot(m, '03-handy-shop');
+    await m.getByRole('button', { name: 'Mehr' }).click(); await m.waitForTimeout(500); await shot(m, '03b-handy-mehr-menue');
+});
 await safe('m-product', async () => {
     await m.goto(base + '/product/' + slug, { waitUntil: 'networkidle' });
     await shot(m, '04-handy-produkt');
-    await m.getByRole('button', { name: /Warenkorb/i }).first().click();
+    await m.locator('.app-buybar button').click();
     await m.waitForTimeout(1500);
     await shot(m, '05-handy-in-den-warenkorb');
 });
@@ -71,3 +74,4 @@ await safe('d-admin', async () => {
 await safe('m-admin', async () => { await login(m); await shot(m, '17-handy-admin-dashboard'); await m.goto(base + '/admin/orders', { waitUntil: 'networkidle' }); await shot(m, '18-handy-admin-bestellungen'); });
 
 await browser.close();
+// trigger 1794577253

@@ -48,6 +48,31 @@ class AppShellAndHardeningTest extends TestCase
             ->assertSee('app-tabbar', false);
     }
 
+    public function test_product_can_be_added_to_cart_from_grid_but_not_beyond_stock(): void
+    {
+        $product = \App\Models\Product::query()->create([
+            'name' => 'Booster', 'slug' => 'booster-grid', 'price' => 5, 'stock' => 1, 'is_active' => true,
+        ]);
+
+        $component = \Livewire\Livewire::test(\App\Livewire\Shop\ProductGrid::class)
+            ->assertSee('In den Warenkorb')
+            ->assertSee('Nur noch 1 da')
+            ->call('addToCart', $product->id)
+            ->assertDispatched('cartUpdated');
+
+        $this->assertSame(1, app(\App\Services\CartService::class)->getTotalLineQuantity());
+
+        // Zweites Exemplar gibt es nicht → Menge bleibt 1.
+        $component->call('addToCart', $product->id);
+        $this->assertSame(1, app(\App\Services\CartService::class)->getTotalLineQuantity());
+    }
+
+    public function test_mobile_more_menu_and_buy_bars_are_rendered(): void
+    {
+        $this->get('/shop')->assertOk()->assertSee('app-sheet', false)->assertSee('Kontakt &amp; Anfahrt', false);
+        $this->get('/')->assertOk()->assertSee('Zum Shop');
+    }
+
     public function test_checkout_pages_are_never_cached(): void
     {
         $cacheControl = (string) $this->get('/cart')->headers->get('Cache-Control');

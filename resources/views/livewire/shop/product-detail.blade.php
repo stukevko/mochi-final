@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mx-auto max-w-7xl px-4 pb-28 pt-5 sm:px-6 md:py-10 lg:px-8">
     @php
         $breadcrumbLd = \App\Support\BreadcrumbJsonLd::forProduct($product);
     @endphp
@@ -18,7 +18,7 @@
 
     {{-- Structured Data: Google Rich Results (Preis, Währung, Verfügbarkeit, Marke) --}}
     <script type="application/ld+json">@json($jsonLd)</script>
-    <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
         <div>
             <div wire:transition="product-image" class="overflow-hidden rounded-3xl border border-white/10 bg-[#080c12]/40 shadow-none backdrop-blur-sm">
                 @php
@@ -29,7 +29,7 @@
                         wire:key="hero-{{ $product->id }}-{{ $this->selectedVariantId ?? 'none' }}"
                         src="{{ $heroImg }}"
                         alt="{{ $product->name }}"
-                        class="aspect-square h-full w-full object-cover object-center transition duration-500 hover:scale-[1.03]"
+                        class="aspect-[4/3] h-full w-full object-cover object-center transition duration-500 hover:scale-[1.03] sm:aspect-square"
                         fetchpriority="high"
                         decoding="async"
                         sizes="(max-width: 1024px) 100vw, 50vw"
@@ -141,12 +141,13 @@
             <div class="mt-8 border-t border-white/10 pt-8">
                 <button
                     type="button"
+                    data-main-buy
                     x-bind:disabled="{{ $product->has_variants ? '!isComplete()' : 'false' }}"
                     wire:click="addToCart(selectedAttributes)"
                     wire:loading.attr="disabled"
                     wire:target="addToCart"
                     @disabled(! $product->has_variants && ! $this->canAddToCart)
-                    class="mochi-gradient-button mochi-gradient-button-sm inline-flex w-full min-h-[48px] items-center justify-center gap-2 px-6 py-3 disabled:pointer-events-none disabled:opacity-45"
+                    class="mochi-gradient-button mochi-gradient-button-sm hidden w-full min-h-[48px] items-center justify-center gap-2 px-6 py-3 disabled:pointer-events-none disabled:opacity-45 md:inline-flex"
                 >
                     <svg wire:loading wire:target="addToCart" class="h-5 w-5 shrink-0 animate-spin text-[#0b0f16]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -174,6 +175,32 @@
                         {{ $message }}
                     </p>
                 @endif
+            </div>
+
+            {{-- Handy: Preis + Kaufen immer erreichbar, direkt über der Tab-Leiste --}}
+            <div class="app-buybar md:hidden">
+                <div class="min-w-0">
+                    <p class="text-lg font-bold tabular-nums leading-tight text-white">{{ $this->formatPrice($this->displayPrice) }}</p>
+                    <p class="text-[11px] leading-tight {{ $this->displayStock > 0 ? 'text-emerald-300' : 'text-rose-300' }}">
+                        {{ $this->displayStock > 0 ? ($this->displayStock <= 3 ? 'Nur noch '.$this->displayStock.' da' : 'Auf Lager') : 'Ausverkauft' }}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    x-bind:disabled="{{ $product->has_variants ? '!isComplete()' : 'false' }}"
+                    wire:click="addToCart(selectedAttributes)"
+                    wire:loading.attr="disabled"
+                    wire:target="addToCart"
+                    @disabled(! $product->has_variants && ! $this->canAddToCart)
+                    class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 flex-1 items-center justify-center px-4 disabled:pointer-events-none disabled:opacity-45"
+                >
+                    @if ($product->has_variants && $this->groupedAttributes->isNotEmpty())
+                        <span x-show="!isComplete()">Variante wählen</span>
+                        <span x-show="isComplete()">In den Warenkorb</span>
+                    @else
+                        In den Warenkorb
+                    @endif
+                </button>
             </div>
 
             <div class="mt-10 space-y-3">
@@ -213,15 +240,6 @@
                     </div>
                 </div>
 
-                <div x-data="{ open: false }" class="overflow-hidden rounded-2xl border border-white/10 bg-[#080c12]/40 backdrop-blur-sm">
-                    <button type="button" class="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-white" @click="open = !open">
-                        <span>Material &amp; Pflege</span>
-                        <span x-text="open ? '−' : '+'"></span>
-                    </button>
-                    <div x-show="open" x-transition.opacity.duration.200ms class="border-t border-white/10 px-5 py-4 text-sm text-mochi-muted">
-                        Hochwertige Materialauswahl. Pflegehinweise findest du auf dem Etikett oder erhältst sie vom Support.
-                    </div>
-                </div>
             </div>
         </div>
     </div>

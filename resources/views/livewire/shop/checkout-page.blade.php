@@ -30,9 +30,9 @@
         </div>
     </div>
 
-    <h1 class="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Checkout</h1>
+    <h1 class="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Kasse</h1>
     <p class="mt-2 max-w-2xl text-sm text-mochi-muted">
-        Prüfe deine Angaben und schließe die Bestellung ab. Die Zahlung erfolgt über den gewählten Zahlungsdienstleister (siehe Datenschutzerklärung).
+        Prüfe deine Angaben und schließe die Bestellung ab. Bezahlt wird im nächsten Schritt sicher über SumUp.
     </p>
 
     @if ($errors->has('cart'))

@@ -52,6 +52,12 @@ return [
         'merchant_code' => env('SUMUP_MERCHANT_CODE'),
         /** SumUp Back Office → Produkte → Export CSV (für shop:sumup-sync-catalog) */
         'catalog_csv_path' => env('SUMUP_CATALOG_CSV_PATH'),
+        /*
+         | Kasse ↔ Shop: Verkäufe dieser SumUp-Kanäle ziehen den Shop-Bestand ab.
+         | ONLINE_PAYMENTS fehlt absichtlich — das sind die Bestellungen dieses Shops selbst.
+         */
+        'sales_sync_enabled' => (bool) env('SUMUP_SALES_SYNC', true),
+        'sales_channels' => array_values(array_filter(array_map('trim', explode(',', (string) env('SUMUP_SALES_CHANNELS', 'POS,KIOSK,SOLO,INVOICE,ORDER_AND_PAY'))))),
     ],
 
     /*

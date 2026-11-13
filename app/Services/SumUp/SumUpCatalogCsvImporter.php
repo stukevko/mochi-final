@@ -270,6 +270,11 @@ class SumUpCatalogCsvImporter
             $updates['sku'] = $data['sku'];
         }
 
+        // SumUp ist die Quelle für Stammdaten: Name und Preis folgen der Kasse.
+        if ($data['name'] !== '' && ! $product->has_variants) {
+            $updates['name'] = $data['name'];
+        }
+
         if ($data['price'] !== null) {
             $updates['price'] = $data['price'];
         }

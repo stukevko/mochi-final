@@ -74,6 +74,10 @@
             <h1 class="mt-2 font-display text-3xl font-semibold tracking-tight text-white">
                 {{ $product->name }}
             </h1>
+            @php $articleNumber = $this->selectedVariant?->sku ?: $product->sku; @endphp
+            @if (filled($articleNumber))
+                <p class="mt-1 text-xs text-mochi-muted">Art.-Nr. {{ $articleNumber }}</p>
+            @endif
 
             <div wire:transition="product-meta" class="transition-opacity duration-200 ease-out">
                 <div class="mt-5 flex items-end gap-3">

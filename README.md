@@ -86,6 +86,20 @@ Bezahlt wird ausschließlich über **SumUp** (`SUMUP_TOKEN`, `SUMUP_MERCHANT_COD
 nicht freigegeben. Im Admin unter *Global Settings → Buchhaltung*: Steuernummer oder USt-IdNr.,
 Rechnungs-Präfix, MwSt.-Satz und Versandkosten pflegen.
 
+## Laden & Shop als eine Einheit (SumUp)
+
+Im Admin unter **Management → Kasse & Shop (SumUp)**:
+
+* **Artikel:** In SumUp anlegen und pflegen, dann die Artikelliste als CSV exportieren und hochladen —
+  Name, Preis und Artikelnummer werden übernommen. (SumUp bietet für den Artikelkatalog keine
+  öffentliche Schnittstelle, deshalb der Export.)
+* **Bestand:** Verkäufe an der SumUp-Kasse werden alle 5 Minuten über die SumUp Sales API gelesen und
+  vom Shop-Bestand abgezogen (`shop:sumup-sync-sales`). Zuordnung über die **Artikelnummer (SKU)**.
+  Unbekannte Artikel landen als Entwurf im Shop.
+* **Grenze:** Der Shop kann den Bestand *in SumUp* nicht ändern. Maßgeblich ist der Bestand im Shop.
+
+Der SumUp-API-Schlüssel braucht die Berechtigung `sales.read`.
+
 ## Updates & Sicherheit
 
 ```bash

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('shop:reconcile-payments')->everyFiveMinutes()->withoutOverlapping(10);
+        $schedule->command('shop:sumup-sync-sales')->everyFiveMinutes()->withoutOverlapping(10);
         $schedule->command('backup:clean')->dailyAt('02:45');
         $schedule->command('backup:run --only-db')->dailyAt('03:00');
     })

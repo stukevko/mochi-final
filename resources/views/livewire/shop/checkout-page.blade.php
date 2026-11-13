@@ -3,7 +3,7 @@
 @endphp
 
 <div
-    class="relative mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 md:pb-10 lg:px-8 lg:py-14"
+    class="relative mx-auto max-w-6xl px-4 pb-40 pt-10 sm:px-6 md:pb-10 lg:px-8 lg:py-14"
     x-on:mochi-turnstile.window="$wire.set('turnstileToken', $event.detail.token)"
 >
     <div
@@ -334,17 +334,17 @@
     </form>
 
     <div class="checkout-sticky-cta md:hidden">
-        <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-            <div class="min-w-0 flex-1">
-                <p class="text-[11px] font-medium uppercase tracking-wide text-mochi-muted">Gesamt</p>
-                <p class="truncate text-base font-bold text-white">{{ $this->formatPrice($this->total) }}</p>
+        <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3">
+            <div class="flex items-baseline justify-between gap-3">
+                <p class="text-sm text-mochi-muted">Gesamt inkl. MwSt.</p>
+                <p class="text-base font-bold tabular-nums text-white">{{ $this->formatPrice($this->total) }}</p>
             </div>
             <button
                 type="submit"
                 form="checkout-form"
                 wire:loading.attr="disabled"
                 wire:target="placeOrder"
-                class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 shrink-0 px-6"
+                class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 w-full justify-center px-4"
             >
                 <span wire:loading.remove wire:target="placeOrder">Jetzt zahlungspflichtig bestellen</span>
                 <span wire:loading wire:target="placeOrder" class="inline-flex items-center gap-2">

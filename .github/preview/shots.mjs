@@ -10,6 +10,8 @@ mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
 
 async function shot(page, name, opts = {}) {
+    // Auf sichtbare Bilder warten (lazy-loading), damit die Vorschau der echten Ansicht entspricht.
+    await page.evaluate(() => Promise.all([...document.images].map((img) => img.complete ? null : new Promise((r) => { img.onload = img.onerror = r; setTimeout(r, 5000); }))));
     await page.waitForTimeout(900);
     await page.screenshot({ path: `${out}/${name}.jpg`, type: 'jpeg', quality: 80, ...opts });
     console.log('ok', name);

@@ -40,14 +40,16 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
             return false;
         }
 
-        $role = $this->role ?? 'admin';
-
-        return $role === 'admin';
+        return $this->isAdmin();
     }
 
+    /**
+     * Strikt: nur explizit gesetzte Admin-Rolle. Kein Fallback "null → admin",
+     * damit neu angelegte Konten ohne Rolle niemals Admin-Rechte erben.
+     */
     public function isAdmin(): bool
     {
-        return ($this->role ?? 'admin') === 'admin';
+        return $this->role === 'admin';
     }
 
     public function orders(): HasMany

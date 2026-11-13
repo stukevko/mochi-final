@@ -181,7 +181,7 @@
                     <div x-show="open" x-transition.opacity.duration.200ms class="border-t border-white/10 px-5 py-4">
                         @if (filled($product->description))
                             <div class="prose prose-invert prose-sm max-w-none leading-6 text-mochi-muted">
-                                {!! $product->description !!}
+                                {!! \App\Support\SafeHtml::clean($product->description) !!}
                             </div>
                         @else
                             <p class="text-sm leading-6 text-mochi-muted">Keine weiteren Details verfügbar.</p>

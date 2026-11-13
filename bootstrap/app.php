@@ -19,9 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Hinter nginx/CDN: X-Forwarded-Proto für $request->secure() / URL-Generierung.
-        // Port 80 leitet bei uns per nginx auf HTTPS um (kein PHP auf :80), daher sicher.
+        // TRUSTED_PROXIES steuerbar, damit die App auch OHNE Reverse-Proxy (Shared Hosting,
+        // `php artisan serve`, Docker ohne Proxy) sicher läuft: dort "127.0.0.1" oder leer setzen,
+        // sonst könnten Clients per X-Forwarded-For ihre IP fälschen (Rate-Limits umgehen).
+        $trustedProxies = trim((string) env('TRUSTED_PROXIES', '*'));
         $middleware->trustProxies(
-            at: '*',
+            at: $trustedProxies === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $trustedProxies)))),
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT

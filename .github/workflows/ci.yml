@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    name: PHP ${{ matrix.php }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: intl, gd, sqlite3, pdo_sqlite, mbstring, zip, bcmath
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Composer install (Update, falls composer.lock veraltet ist)
+        run: composer install --no-interaction --prefer-dist || composer update --no-interaction --prefer-dist
+
+      - name: composer.lock als Artefakt (PHP 8.3 = kompatibelste Auflösung)
+        if: matrix.php == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: composer-lock
+          path: composer.lock
+
+      - name: Sicherheits-Audit (Composer + npm)
+        run: |
+          composer audit
+          npm ci --no-audit --no-fund
+          npm audit --omit=dev --audit-level=high
+
+      - name: Assets bauen
+        run: npm run build
+
+      - name: Tests
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test

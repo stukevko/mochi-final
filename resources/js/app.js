@@ -1,6 +1,9 @@
 import './bootstrap';
 import './mochi-calendar';
 import { initCookieConsent } from './cookie-consent';
+import { initAppShell } from './app-shell';
+
+initAppShell();
 
 /**
  * Dezentes Parallax auf große Hintergrund-Bokeh-Kreise (Glow-Up).
@@ -48,9 +51,10 @@ function initMochiMobileNav() {
     const header = document.getElementById('mochi-site-header');
     const toggle = document.getElementById('mochi-nav-toggle');
     const nav = document.getElementById('mochi-site-nav');
-    if (!header || !toggle || !nav) {
+    if (!header || !toggle || !nav || toggle.dataset.mochiBound === '1') {
         return;
     }
+    toggle.dataset.mochiBound = '1';
 
     const mq = window.matchMedia('(min-width: 768px)');
 
@@ -168,6 +172,8 @@ document.addEventListener('livewire:navigate', () => {
 
 document.addEventListener('livewire:navigated', () => {
     document.body.classList.remove('lw-navigating-fast');
+    // Nach wire:navigate ist der Header neu im DOM → Menü-Toggle erneut verbinden (idempotent).
+    initMochiMobileNav();
 });
 
 document.addEventListener('alpine:init', () => {

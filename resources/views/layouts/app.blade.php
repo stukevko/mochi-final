@@ -8,7 +8,8 @@
 <html class="min-h-full bg-[#040712]" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        @include('partials.app-head')
         <title>@yield('title', config('mochicards.site_name'))</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml" sizes="any">
         @stack('meta')
@@ -232,6 +233,8 @@
                 class="rounded-xl border border-white/15 bg-[#080c12] px-4 py-3 text-sm font-medium text-white shadow-lg"
             ></div>
         </div>
+
+        @include('partials.app-tabbar')
 
         @stack('scripts')
         @include('partials.cookie-consent')

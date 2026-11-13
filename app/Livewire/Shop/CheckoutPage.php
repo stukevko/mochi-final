@@ -225,11 +225,11 @@ class CheckoutPage extends Component
             });
         } catch (Throwable $e) {
             ShopErrorLogger::report('checkout.place_order.failed', $e, [
-                'email' => $this->email,
+                'email' => self::maskEmail($this->email),
                 'ip' => request()->ip(),
             ]);
             Log::channel('checkout_stack')->error('checkout.place_order.failed', [
-                'email' => $this->email,
+                'email' => self::maskEmail($this->email),
                 'ip' => request()->ip(),
                 'message' => $e->getMessage(),
             ]);
@@ -389,12 +389,26 @@ class CheckoutPage extends Component
         return null;
     }
 
+    /**
+     * DSGVO: keine vollständigen Kunden-E-Mails in Log-Dateien.
+     */
+    protected static function maskEmail(?string $email): string
+    {
+        $email = (string) $email;
+        $at = strpos($email, '@');
+        if ($at === false) {
+            return $email === '' ? '' : '***';
+        }
+
+        return substr($email, 0, min(2, $at)).'***'.substr($email, $at);
+    }
+
     protected function addressPayload(): array
     {
         return [
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'email' => $this->email,
+            'email' => self::maskEmail($this->email),
             'phone' => $this->phone,
             'street' => $this->street,
             'zip' => $this->zip,
@@ -433,7 +447,7 @@ class CheckoutPage extends Component
         } catch (Throwable $e) {
             ShopErrorLogger::report('checkout.place_order.clear_cart_failed', $e, [
                 'order_id' => $order->id ?? null,
-                'email' => $this->email,
+                'email' => self::maskEmail($this->email),
             ]);
             Log::channel('checkout_stack')->error('checkout.place_order.clear_cart_failed', [
                 'order_id' => $order->id,

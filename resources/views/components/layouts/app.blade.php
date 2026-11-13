@@ -18,7 +18,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    @include('partials.app-head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $pageTitle }}</title>
@@ -154,7 +155,6 @@
             <a href="{{ route('home') }}" wire:navigate @click="mobileMenuOpen = false" class="flex min-h-11 items-center rounded-xl border border-transparent px-3 py-2 text-mochi-text transition hover:border-white/10 hover:bg-white/5">Home</a>
             <a href="{{ route('shop') }}" wire:navigate @click="mobileMenuOpen = false" class="flex min-h-11 items-center rounded-xl border border-transparent px-3 py-2 text-mochi-text transition hover:border-white/10 hover:bg-white/5">Shop</a>
             <a href="{{ route('cart') }}" wire:navigate @click="mobileMenuOpen = false" class="flex min-h-11 items-center rounded-xl border border-transparent px-3 py-2 text-mochi-text transition hover:border-white/10 hover:bg-white/5">Warenkorb</a>
-            <a href="{{ url('/admin') }}" @click="mobileMenuOpen = false" class="flex min-h-11 items-center rounded-xl border border-transparent px-3 py-2 text-mochi-muted transition hover:border-mochi-accent/25 hover:bg-mochi-accent/10 hover:text-mochi-coral">Admin</a>
         </nav>
     </aside>
 
@@ -277,9 +277,13 @@
                             </svg>
                         </a>
                     </div>
-                    @if(empty($shopSocialInstagram) && empty($shopSocialFacebook) && empty($shopSocialX))
+                    @if(empty($shopSocialInstagram) && empty($shopSocialFacebook) && empty($shopSocialX) && auth()->user()?->isAdmin())
                         <p class="mt-2 text-xs text-mochi-muted">Social-Links im Admin unter Branding hinterlegen.</p>
                     @endif
+                    <button type="button" data-app-install hidden class="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-mochi-text transition hover:border-mochi-accent/35 hover:bg-mochi-accent/10">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" /></svg>
+                        Als App installieren
+                    </button>
                 </div>
             </div>
 
@@ -304,18 +308,7 @@
         </div>
     </footer>
 
-    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#040712]/92 p-2 backdrop-blur-xl supports-[backdrop-filter]:bg-[#040712]/85 md:hidden">
-        <div class="grid grid-cols-4 gap-1 text-center text-[11px] font-medium text-mochi-muted">
-            <a href="{{ route('home') }}" wire:navigate class="inline-flex min-h-11 items-center justify-center rounded-lg px-2 py-2 transition {{ request()->routeIs('home') ? 'bg-mochi-accent/15 font-semibold text-mochi-accent ring-1 ring-mochi-accent/35' : 'hover:bg-white/5 hover:text-white' }}">
-                Home
-            </a>
-            <button type="button" @click="searchOpen = true" class="inline-flex min-h-11 items-center justify-center rounded-lg px-2 py-2 transition hover:bg-white/5 hover:text-white">Suche</button>
-            <a href="{{ route('cart') }}" wire:navigate class="inline-flex min-h-11 items-center justify-center rounded-lg px-2 py-2 transition {{ request()->routeIs('cart') ? 'bg-mochi-accent/15 font-semibold text-mochi-accent ring-1 ring-mochi-accent/35' : 'hover:bg-white/5 hover:text-white' }}">
-                Cart
-            </a>
-            <a href="{{ route('shop') }}" wire:navigate class="inline-flex min-h-11 items-center justify-center rounded-lg px-2 py-2 transition {{ request()->routeIs('shop') ? 'bg-mochi-accent/15 font-semibold text-mochi-accent ring-1 ring-mochi-accent/35' : 'hover:bg-white/5 hover:text-white' }}">Shop</a>
-        </div>
-    </div>
+    @include('partials.app-tabbar')
 
     <div x-show="cartDrawerOpen" x-transition.opacity class="drawer-backdrop" @click="cartDrawerOpen = false"></div>
     <aside x-show="cartDrawerOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="drawer-panel drawer-panel-motion flex flex-col text-mochi-text" x-cloak>
@@ -324,7 +317,7 @@
             <button type="button" @click="cartDrawerOpen = false" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-mochi-muted transition hover:bg-white/5 hover:text-white" aria-label="Warenkorb schließen">✕</button>
         </div>
         <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <livewire:shop.cart-drawer />
+            <livewire:shop.cart-drawer lazy />
         </div>
     </aside>
 

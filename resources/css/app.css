@@ -1243,3 +1243,211 @@ body.lw-navigating-fast .nav-progress {
         transform: scale(1);
     }
 }
+
+/* ==========================================================================
+   App-Shell — fühlt sich auf Handy/Tablet wie eine native App an
+   ========================================================================== */
+
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 160ms;
+    animation-timing-function: var(--mochi-ease-smooth);
+}
+
+/* Die Kartenhülle des aktiven Tabs gleitet beim Seitenwechsel zum neuen Tab. */
+::view-transition-group(app-tab-sleeve) {
+    animation-duration: 320ms;
+    animation-timing-function: var(--mochi-ease-smooth);
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    a,
+    button,
+    [role='button'],
+    label,
+    summary {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-mochi-accent-strong);
+        outline-offset: 2px;
+    }
+
+    img {
+        -webkit-user-drag: none;
+    }
+
+    /* iOS zoomt bei Feldern < 16px automatisch hinein — das wirkt nicht wie eine App. */
+    @media (max-width: 767px) {
+        input:not([type='checkbox']):not([type='radio']),
+        select,
+        textarea {
+            font-size: max(16px, 1em);
+        }
+    }
+}
+
+/* Statusleiste/Notch: Header rutscht unter die Safe-Area (viewport-fit=cover). */
+.mochi-header,
+.mochi-header-glass {
+    padding-top: env(safe-area-inset-top, 0);
+}
+
+#global-shop-toast {
+    top: calc(5.5rem + env(safe-area-inset-top, 0));
+}
+
+/* Installierte App: kein Gummiband-Scrollen der ganzen Seite, keine Text-Markierung in Leisten. */
+html.is-standalone {
+    overscroll-behavior-y: none;
+}
+
+html.is-standalone .app-tabbar,
+html.is-standalone .mochi-header,
+html.is-standalone .mochi-header-glass {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ---------- Tab-Leiste ---------- */
+
+.app-tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 45;
+    padding: 0.375rem max(0.5rem, env(safe-area-inset-left)) calc(0.375rem + env(safe-area-inset-bottom, 0))
+        max(0.5rem, env(safe-area-inset-right));
+    background: rgb(4 7 18 / 0.86);
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+
+.app-tabbar ul {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.app-tab {
+    position: relative;
+    display: flex;
+    min-height: 3.25rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: var(--color-mochi-muted);
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: color 150ms var(--mochi-ease-smooth);
+}
+
+.app-tab:active .app-tab-icon {
+    transform: scale(0.88);
+}
+
+.app-tab.is-active {
+    color: var(--color-mochi-text);
+}
+
+.app-tab.is-active .app-tab-icon {
+    color: var(--color-mochi-accent);
+}
+
+.app-tab-icon {
+    position: relative;
+    display: inline-flex;
+    transition: transform 120ms var(--mochi-ease-smooth);
+}
+
+.app-tab-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.app-tab-label {
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Kartenhülle (TCG-Sleeve): Hochformat, leicht gekippt, orange Kante. */
+.app-tab-sleeve {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2.75rem;
+    height: 3.15rem;
+    border: 1.5px solid rgb(255 122 31 / 0.55);
+    border-radius: 0.55rem;
+    background: linear-gradient(165deg, rgb(255 122 31 / 0.2) 0%, rgb(255 181 71 / 0.04) 70%);
+    box-shadow: 0 0 22px -8px rgb(255 122 31 / 0.65);
+    transform: translate(-50%, -50%) rotate(-4deg);
+    view-transition-name: app-tab-sleeve;
+    pointer-events: none;
+}
+
+.app-tab-badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.65rem;
+    display: inline-flex;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: var(--color-mochi-accent);
+    color: #0b0f16;
+    font-size: 0.625rem;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px #040712;
+}
+
+.app-tab-badge[hidden] {
+    display: none;
+}
+
+/* Platz schaffen, damit Inhalte & Footer nie unter der Leiste verschwinden. */
+@media (max-width: 767px) {
+    body:has(.app-tabbar) {
+        padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
+    }
+
+    body:has(.app-tabbar) .checkout-sticky-cta {
+        bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    @view-transition {
+        navigation: none;
+    }
+
+    .app-tab,
+    .app-tab-icon {
+        transition: none;
+    }
+}

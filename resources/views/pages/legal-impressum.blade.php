@@ -6,7 +6,7 @@
     <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         <h1 class="font-display text-2xl font-bold tracking-tight text-white">Impressum</h1>
         <div class="cms-content mt-6 max-w-none">
-            {!! $legalHtml !!}
+            {!! \App\Support\SafeHtml::clean($legalHtml) !!}
         </div>
     </div>
 @endsection

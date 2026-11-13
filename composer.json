@@ -3,16 +3,22 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.3",
         "adriaanzon/filament-passkeys": "^0.2.2",
         "barryvdh/laravel-dompdf": "^3.1",
-        "filament/filament": "^5.4",
-        "intervention/image": "3",
-        "laravel/framework": "^13.0",
+        "dompdf/dompdf": "^3.1.6",
+        "filament/filament": "^5.7.5",
+        "intervention/image": "^3.11",
+        "laravel/framework": "^13.29",
         "laravel/tinker": "^3.0",
+        "league/commonmark": "^2.9",
+        "livewire/livewire": "^4.4.8",
         "sentry/sentry-laravel": "^4.24",
         "spatie/laravel-backup": "^10.2",
         "stripe/stripe-php": "^20.0"
@@ -39,11 +45,13 @@
     },
     "scripts": {
         "setup": [
-            "composer install",
+            "composer install --no-interaction --prefer-dist --optimize-autoloader",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan key:generate --ansi",
             "@php artisan migrate --force",
-            "npm install",
+            "@php artisan storage:link --ansi",
+            "npm ci || npm install",
             "npm run build"
         ],
         "dev": [
@@ -79,6 +87,18 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "security": [
+            "@composer audit",
+            "npm audit --omit=dev"
+        ],
+        "deploy": [
+            "@composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader",
+            "@php artisan migrate --force",
+            "@php artisan storage:link --ansi",
+            "@php artisan optimize --ansi",
+            "@php artisan filament:optimize --ansi",
+            "@php artisan queue:restart --ansi"
         ]
     },
     "extra": {
@@ -95,7 +115,12 @@
             "php-http/discovery": true
         },
         "audit": {
-            "block-insecure": false
+            "block-insecure": true,
+            "abandoned": "report"
+        },
+        "platform-check": true,
+        "platform": {
+            "php": "8.3.0"
         }
     },
     "minimum-stability": "stable",

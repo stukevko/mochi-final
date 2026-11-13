@@ -54,12 +54,7 @@ class ContactForm extends Component
             return;
         }
 
-        if (! TurnstileVerifier::verify($this->turnstileToken, request()->ip())) {
-            $this->addError('turnstileToken', 'Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut versuchen.');
-
-            return;
-        }
-
+        // Limit vor der (externen) Turnstile-Prüfung: auch fehlgeschlagene Versuche zählen.
         $rateKey = 'contact-form:'.sha1((string) request()->ip());
         if (RateLimiter::tooManyAttempts($rateKey, 5)) {
             $this->addError('message', 'Zu viele Anfragen. Bitte später erneut versuchen.');
@@ -67,6 +62,12 @@ class ContactForm extends Component
             return;
         }
         RateLimiter::hit($rateKey, 3600);
+
+        if (! TurnstileVerifier::verify($this->turnstileToken, request()->ip())) {
+            $this->addError('turnstileToken', 'Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut versuchen.');
+
+            return;
+        }
 
         /** @var ContactSubject $subjectEnum */
         $subjectEnum = ContactSubject::from($this->subject);
@@ -83,7 +84,12 @@ class ContactForm extends Component
 
         $inbox = trim((string) Setting::get('shop_email', ''));
         if ($inbox !== '' && filter_var($inbox, FILTER_VALIDATE_EMAIL)) {
-            Mail::to($inbox)->send(new NewContactMessageMail($record));
+            try {
+                Mail::to($inbox)->send(new NewContactMessageMail($record));
+            } catch (\Throwable $e) {
+                // Nachricht ist gespeichert und im Admin sichtbar — Mailfehler darf keinen 500er auslösen.
+                report($e);
+            }
         }
 
         $this->sent = true;

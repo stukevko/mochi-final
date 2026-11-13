@@ -30,7 +30,7 @@ class BlockStorefrontDuringMaintenance
     {
         $path = $request->path();
 
-        if ($path === 'up' || $path === 'sitemap.xml' || $path === 'robots.txt') {
+        if (in_array($path, ['up', 'sitemap.xml', 'robots.txt', 'manifest.webmanifest', 'admin-manifest.webmanifest', 'sw.js'], true)) {
             return true;
         }
 

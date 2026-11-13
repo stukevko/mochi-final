@@ -12,11 +12,13 @@ use App\Support\ShopBranding;
 use App\Support\ShopTypography;
 use App\Support\StorefrontLayoutCache;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,9 +39,23 @@ class AppServiceProvider extends ServiceProvider
             self::enforceHttpsAbsoluteUrls();
         }
 
-        if (Schema::hasTable('products')) {
-            Product::observe(ProductObserver::class);
-        }
+        // observe() fasst die DB nicht an — kein Schema::hasTable() (= 1 Query) pro Request nötig.
+        Product::observe(ProductObserver::class);
+
+        // Langlebige Queue-Worker: Request-Memo der Settings vor jedem Job leeren.
+        Queue::before(static fn () => Setting::flushMemo());
+
+        // Admin-/Profil-Passwörter: mindestens 10 Zeichen, Buchstaben + Zahlen.
+        Password::defaults(static fn () => Password::min(10)->letters()->numbers());
+
+        // Production: Lazy-Loading-Verstöße nur loggen (N+1 früh erkennen, ohne Seiten zu brechen).
+        Model::preventLazyLoading(! $this->app->isProduction());
+        Model::handleLazyLoadingViolationUsing(static function ($model, string $relation): void {
+            if (app()->isProduction()) {
+                return;
+            }
+            logger()->warning('lazy-loading', ['model' => $model::class, 'relation' => $relation]);
+        });
 
         SiteSetting::saved(function (SiteSetting $setting): void {
             if (! $setting->wasChanged('featured_product_image_path')) {
@@ -190,18 +206,21 @@ class AppServiceProvider extends ServiceProvider
 
     private static function legalHtmlWithCmsFallback(string $settingKey, ?string $cmsSlug, string $placeholder): string
     {
-        if (Schema::hasTable('settings')) {
+        // Kein Schema::hasTable() pro Aufruf: Fehler (z. B. vor der Migration) fangen wir ab.
+        try {
             $html = Setting::get($settingKey);
             if (is_string($html) && trim($html) !== '') {
                 return $html;
             }
-        }
 
-        if ($cmsSlug !== null && Schema::hasTable('cms_pages')) {
-            $page = CmsPage::query()->where('slug', $cmsSlug)->first();
-            if ($page && filled($page->body)) {
-                return (string) $page->body;
+            if ($cmsSlug !== null) {
+                $body = CmsPage::query()->where('slug', $cmsSlug)->value('body');
+                if (filled($body)) {
+                    return (string) $body;
+                }
             }
+        } catch (\Throwable) {
+            // DB nicht bereit → Platzhalter.
         }
 
         return '<p class="text-mochi-muted">'.$placeholder.'</p>';

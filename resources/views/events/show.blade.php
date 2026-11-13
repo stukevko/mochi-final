@@ -109,7 +109,7 @@
 
         @if ($event->description)
             <div class="cms-content">
-                {!! $event->description !!}
+                {!! \App\Support\SafeHtml::clean($event->description) !!}
             </div>
         @endif
     </article>

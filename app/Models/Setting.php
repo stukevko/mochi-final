@@ -19,8 +19,22 @@ class Setting extends Model
         });
     }
 
+    /**
+     * Request-lokaler Speicher: Setting::get() wird pro Seite dutzendfach aufgerufen.
+     * Mit CACHE_STORE=database war jeder Aufruf eine eigene DB-Abfrage.
+     *
+     * @var array<string, array{value: ?string, type: ?string}|null>
+     */
+    protected static array $memo = [];
+
+    public static function flushMemo(): void
+    {
+        self::$memo = [];
+    }
+
     protected static function forgetCacheKey(string $key): void
     {
+        unset(self::$memo[$key]);
         Cache::forget("setting.{$key}");
         Cache::forget("setting.v2.{$key}");
     }
@@ -44,6 +58,12 @@ class Setting extends Model
     public static function get(string $key, mixed $default = null): mixed
     {
         // Nur Arrays/Skalare im App-Cache — niemals Eloquent/Collection/Closure (unserialize-Fallen).
+        if (array_key_exists($key, self::$memo)) {
+            $payload = self::$memo[$key];
+
+            return $payload === null ? $default : self::castValue($payload['value'], $payload['type'] ?? 'text');
+        }
+
         $payload = Cache::rememberForever("setting.v2.{$key}", function () use ($key) {
             $row = self::query()->where('key', $key)->first();
 
@@ -56,6 +76,8 @@ class Setting extends Model
                 'type' => $row->type,
             ];
         });
+
+        self::$memo[$key] = $payload;
 
         if ($payload === null) {
             return $default;

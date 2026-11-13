@@ -68,6 +68,7 @@ class HomeController extends Controller
             'upcomingEvents' => $upcomingEvents,
             'latestPosts' => $latestPosts,
             'heroLogoUrl' => $heroLogoUrl,
+            'hasOwnHeroLogo' => filled($settings->hero_logo_path),
             'heroBackgroundUrl' => $heroBackgroundUrl,
             'heroHeadline' => $heroHeadline,
             'heroVisitStoreUrl' => $heroVisitStoreUrl,

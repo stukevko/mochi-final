@@ -17,12 +17,14 @@
             <div class="mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-20 lg:py-24">
                 <div class="grid items-center gap-9 lg:grid-cols-2 lg:gap-14 xl:gap-20">
                     <div class="flex flex-col lg:pr-2">
-                        {{-- Logo nur ab Tablet: am Handy steht es bereits im Kopf direkt darüber. --}}
-                        <img
-                            src="{{ $heroLogoUrl }}"
-                            alt=""
-                            class="mb-8 hidden h-12 w-auto max-w-[14rem] object-contain opacity-95 sm:mb-10 sm:h-14 md:block"
-                        >
+                        {{-- Nur ein eigens hochgeladenes Hero-Logo zeigen — das Standard-Logo steht bereits im Kopf direkt darüber. --}}
+                        @if ($hasOwnHeroLogo ?? false)
+                            <img
+                                src="{{ $heroLogoUrl }}"
+                                alt=""
+                                class="mb-8 hidden h-12 w-auto max-w-[14rem] object-contain opacity-95 sm:mb-10 sm:h-14 md:block"
+                            >
+                        @endif
                         <h1 class="font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[2.65rem] xl:text-6xl">
                             {{ $heroHeadline }}
                         </h1>

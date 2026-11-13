@@ -88,7 +88,7 @@ jobs:
             if [ -z "$NEXT" ]; then echo "FEHLER: Helfer bricht ab:"; sed 's/<[^>]*>/ /g' /tmp/setup.html | tr -s ' \n' | head -c 800; exit 1; fi
           done
           grep -q '<!-- done -->' /tmp/setup.html || { echo "FEHLER: Helfer wurde nicht fertig"; exit 1; }
-          expect "Helfer hat sich selbst gelöscht" "$(code $B/mochi-setup.php)" 404
+          if sudo test -e /var/www/shop/mochi-setup.php; then echo "FEHLER: Helfer hat sich nicht selbst gelöscht"; exit 1; else echo "ok: Helfer hat sich selbst gelöscht"; fi
           if sudo test -e /var/www/shop/mochi-cards-webspace.zip; then echo "FEHLER: ZIP liegt noch im Webspace"; exit 1; fi
           expect "Start leitet zum Assistenten" "$(code $B/)" 302
           curl -s -c /tmp/c $B/install.php -o /tmp/form.html

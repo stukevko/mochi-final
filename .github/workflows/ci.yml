@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   tests:
@@ -30,21 +30,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Composer install (Update, falls composer.lock veraltet ist)
-        run: composer install --no-interaction --prefer-dist || composer update --no-interaction --prefer-dist
-
-      # War composer.lock veraltet (composer.json geändert), wird die neu aufgelöste Lock-Datei
-      # – aufgelöst für PHP 8.3, also kompatibel mit 8.3/8.4/8.5 – auf den Branch zurückgeschrieben.
-      - name: Aktualisierte composer.lock committen
-        if: matrix.php == '8.3' && github.event_name == 'push'
-        run: |
-          if ! git diff --quiet -- composer.lock; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add composer.lock
-            git commit -m "composer.lock aktualisiert (CI, PHP 8.3-Auflösung)"
-            git push
-          fi
+      - name: Composer install
+        run: composer install --no-interaction --prefer-dist
 
       - name: Sicherheits-Audit (Composer + npm)
         run: |

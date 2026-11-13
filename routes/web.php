@@ -77,19 +77,14 @@ Route::middleware('cache.headers:no_store;private')->group(function (): void {
         ->name('checkout.invoice');
     Route::get('/checkout/return/{provider}/{order}', [PaymentCheckoutController::class, 'returnFromProvider'])
         ->middleware(['signed', 'throttle:30,1'])
-        ->whereIn('provider', ['stripe', 'paypal', 'sumup'])
+        ->whereIn('provider', ['sumup'])
         ->name('payment.return');
-    Route::get('/checkout/cancel/{provider}/{order}', [PaymentCheckoutController::class, 'cancelFromProvider'])
-        ->middleware('throttle:30,1')
-        ->name('payment.cancel');
 });
 
-// Webhooks: signaturgeprüft im Controller; Throttle verhindert, dass Fremde z. B. die
-// PayPal-Verifikation (2 ausgehende API-Calls pro Request) als Verstärker missbrauchen.
-Route::middleware('throttle:120,1')->group(function (): void {
-    Route::post('/webhooks/payment/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.payment.stripe');
-    Route::post('/webhooks/payment/paypal', [PaymentWebhookController::class, 'paypal'])->name('webhooks.payment.paypal');
-});
+// SumUp-Webhook: Inhalt wird nicht vertraut, Status wird bei SumUp nachgefragt (siehe Controller).
+Route::post('/webhooks/payment/sumup', [PaymentWebhookController::class, 'sumup'])
+    ->middleware('throttle:120,1')
+    ->name('webhooks.payment.sumup');
 
 Route::get('/ueber-uns', AboutController::class)->name('about');
 

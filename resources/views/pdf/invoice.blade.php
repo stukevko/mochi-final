@@ -10,6 +10,18 @@
     $shopEmail = trim((string) Setting::get('shop_email', ''));
     $shopPhone = trim((string) Setting::get('shop_phone', ''));
     $taxId = trim((string) Setting::get('tax_id', ''));
+    $taxNumber = trim((string) Setting::get('tax_number', ''));
+
+    $invoiceDate = $order->invoiced_at ?? $order->paid_at ?? $order->created_at;
+    $serviceDate = $order->paid_at ?? $order->created_at;
+
+    // Steuersatz aus den gespeicherten Beträgen der Bestellung (nicht aus der aktuellen Einstellung),
+    // damit alte Rechnungen nach einer Satzänderung unverändert bleiben.
+    $net = (float) $order->subtotal;
+    $taxAmount = (float) $order->tax;
+    $taxRate = $net > 0 ? round($taxAmount / $net * 100) : 0;
+    $isSmallBusiness = $taxAmount <= 0;
+    $shippingCost = (float) $order->shipping_cost;
     $logoPath = ShopBranding::logoPathForPdf();
 
     $format = static fn (float|string|null $amount): string => MoneyFormatter::format((float) $amount);
@@ -165,6 +177,9 @@
                         @if ($shopPhone !== ''){{ $shopPhone }}@endif
                     </p>
                 @endif
+                @if ($taxNumber !== '')
+                    <p class="muted" style="margin: 4px 0 0;">Steuernummer: {{ $taxNumber }}</p>
+                @endif
                 @if ($taxId !== '')
                     <p class="muted" style="margin: 4px 0 0;">USt-IdNr.: {{ $taxId }}</p>
                 @endif
@@ -173,7 +188,8 @@
                 <p class="title">Rechnung</p>
                 <p class="muted" style="margin: 0;">Nr. {{ $order->getInvoiceNumber() }}</p>
                 <p class="muted" style="margin: 4px 0 0;">Bestellnr. {{ $order->order_number }}</p>
-                <p class="muted" style="margin: 4px 0 0;">Datum: {{ $order->created_at?->format('d.m.Y') }}</p>
+                <p class="muted" style="margin: 4px 0 0;">Rechnungsdatum: {{ $invoiceDate?->format('d.m.Y') }}</p>
+                <p class="muted" style="margin: 4px 0 0;">Leistungsdatum: {{ $serviceDate?->format('d.m.Y') }}</p>
             </td>
         </tr>
     </table>
@@ -210,8 +226,8 @@
                 <th style="width: 42%;">Artikel</th>
                 <th style="width: 14%;">SKU</th>
                 <th class="num" style="width: 10%;">Menge</th>
-                <th class="num" style="width: 17%;">Einzelpreis</th>
-                <th class="num" style="width: 17%;">Summe</th>
+                <th class="num" style="width: 17%;">Einzelpreis{{ $isSmallBusiness ? '' : ' (brutto)' }}</th>
+                <th class="num" style="width: 17%;">Summe{{ $isSmallBusiness ? '' : ' (brutto)' }}</th>
             </tr>
         </thead>
         <tbody>
@@ -237,18 +253,10 @@
     </table>
 
     <table class="totals" cellpadding="0" cellspacing="0">
-        <tr>
-            <td class="label">Zwischensumme (netto)</td>
-            <td class="amount">{{ $format($order->subtotal) }}</td>
-        </tr>
-        <tr>
-            <td class="label">MwSt.</td>
-            <td class="amount">{{ $format($order->tax) }}</td>
-        </tr>
-        @if ((float) $order->shipping_cost > 0)
+        @if ($shippingCost > 0)
             <tr>
-                <td class="label">Versand</td>
-                <td class="amount">{{ $format($order->shipping_cost) }}</td>
+                <td class="label">Versand{{ $isSmallBusiness ? '' : ' (brutto)' }}</td>
+                <td class="amount">{{ $format($shippingCost) }}</td>
             </tr>
         @endif
         @if ((float) $order->discount > 0)
@@ -257,15 +265,33 @@
                 <td class="amount">−{{ $format($order->discount) }}</td>
             </tr>
         @endif
+        @unless ($isSmallBusiness)
+            <tr>
+                <td class="label">Nettobetrag</td>
+                <td class="amount">{{ $format($net) }}</td>
+            </tr>
+            <tr>
+                <td class="label">zzgl. {{ $taxRate }} % MwSt.</td>
+                <td class="amount">{{ $format($taxAmount) }}</td>
+            </tr>
+        @endunless
         <tr class="grand">
-            <td>Gesamtbetrag</td>
+            <td>Rechnungsbetrag</td>
             <td class="amount">{{ $format($order->total) }}</td>
         </tr>
     </table>
 
+    @if ($isSmallBusiness)
+        <p style="margin: 14px 0 0;" class="muted">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+    @endif
+
+
     <p style="margin: 24px 0 0;" class="muted">
-        Zahlungsart: {{ $paymentLabel }} ·
-        Zahlungsstatus: {{ $order->payment_status_label }}
+        @if ($order->isPaid())
+            Betrag dankend erhalten{{ $order->paid_at ? ' am '.$order->paid_at->format('d.m.Y') : '' }} per {{ $paymentLabel }}.
+        @else
+            Zahlungsart: {{ $paymentLabel }} · Zahlungsstatus: {{ $order->payment_status_label }}
+        @endif
     </p>
 
     @if (filled($order->notes))

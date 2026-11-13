@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Order extends Model
@@ -17,6 +18,23 @@ class Order extends Model
         static::saved(fn () => Cache::forget('filament.nav.orders_pending_count'));
 
         static::deleted(fn () => Cache::forget('filament.nav.orders_pending_count'));
+
+        // Zahlungsdatum automatisch setzen — egal ob SumUp oder „Als bezahlt markieren“ im Admin.
+        static::saving(function (Order $order): void {
+            if ($order->isDirty('payment_status') && $order->payment_status === 'paid' && $order->paid_at === null) {
+                $order->paid_at = now();
+            }
+        });
+
+        // Storno/Erstattung (auch im Admin): abgezogene Ware automatisch zurück in den Bestand.
+        static::updated(function (Order $order): void {
+            if ($order->wasChanged('status') && in_array($order->status, ['cancelled', 'refunded'], true)) {
+                $fresh = self::query()->find($order->getKey());
+                if ($fresh) {
+                    app(\App\Services\Inventory\StockService::class)->restoreOrderStock($fresh);
+                }
+            }
+        });
     }
 
     /**
@@ -47,6 +65,8 @@ class Order extends Model
         'shipping_address' => 'array',
         'payment_data' => 'array',
         'terms_accepted_at' => 'datetime',
+        'invoiced_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     /**
@@ -102,11 +122,64 @@ class Order extends Model
      */
     public static function generateOrderNumber(): string
     {
-        $prefix = 'ORD';
-        $timestamp = now()->format('ymd');
-        $random = strtoupper(substr(uniqid(), -4));
-        
-        return "{$prefix}-{$timestamp}-{$random}";
+        // Kryptografisch zufällig + Kollisionsprüfung (vorher: uniqid-Suffix, kollisionsanfällig und erratbar).
+        do {
+            $number = 'ORD-'.now()->format('ymd').'-'.strtoupper(Str::random(6));
+        } while (self::query()->where('order_number', $number)->exists());
+
+        return $number;
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
+
+    /**
+     * Vergibt einmalig eine fortlaufende, lückenlose Rechnungsnummer (Präfix + Jahr + Zähler).
+     * Nur für bezahlte Bestellungen; mehrfacher Aufruf ist gefahrlos.
+     */
+    public function ensureInvoiceNumber(): ?string
+    {
+        if (filled($this->invoice_number)) {
+            return $this->invoice_number;
+        }
+
+        if (! $this->isPaid()) {
+            return null;
+        }
+
+        DB::transaction(function (): void {
+            $fresh = self::query()->whereKey($this->getKey())->lockForUpdate()->first();
+            if ($fresh && filled($fresh->invoice_number)) {
+                $this->invoice_number = $fresh->invoice_number;
+                $this->invoiced_at = $fresh->invoiced_at;
+
+                return;
+            }
+
+            $counter = Setting::query()->where('key', 'invoice_next_number')->lockForUpdate()->first()
+                ?? new Setting(['key' => 'invoice_next_number', 'group' => 'general', 'type' => 'integer', 'value' => '1']);
+
+            $prefix = trim((string) Setting::get('invoice_prefix', 'RE-'));
+            $prefix = $prefix === '' ? 'RE-' : $prefix;
+
+            $next = max(1, (int) $counter->value);
+            do {
+                $candidate = $prefix.now()->format('Y').'-'.str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+                $next++;
+            } while (self::query()->where('invoice_number', $candidate)->exists());
+
+            $counter->value = (string) $next;
+            $counter->save();
+
+            $this->forceFill([
+                'invoice_number' => $candidate,
+                'invoiced_at' => now(),
+            ])->save();
+        });
+
+        return $this->invoice_number;
     }
 
     /**
@@ -180,12 +253,14 @@ class Order extends Model
 
     public function getInvoiceNumber(): string
     {
-        $prefix = trim((string) Setting::get('invoice_prefix', 'INV-'));
-        if ($prefix === '') {
-            $prefix = 'INV-';
+        if (filled($this->invoice_number)) {
+            return (string) $this->invoice_number;
         }
 
-        return $prefix.$this->order_number;
+        // Altbestellungen ohne vergebene Nummer.
+        $prefix = trim((string) Setting::get('invoice_prefix', 'RE-'));
+
+        return ($prefix === '' ? 'RE-' : $prefix).$this->order_number;
     }
 
     public function getCurrencySymbol(): string

@@ -43,7 +43,12 @@ class SumUpCheckoutRedirectTest extends TestCase
             $payload = $request->data();
             $returnUrl = $payload['redirect_url'] ?? null;
 
-            if (! is_string($returnUrl) || ($payload['return_url'] ?? null) !== $returnUrl) {
+            // return_url = Server-zu-Server-Webhook, redirect_url = Rückkehr des Kunden.
+            if (! is_string($returnUrl) || ($payload['return_url'] ?? null) !== route('webhooks.payment.sumup')) {
+                return false;
+            }
+
+            if (empty($payload['valid_until'])) {
                 return false;
             }
 

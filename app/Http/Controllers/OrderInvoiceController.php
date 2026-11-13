@@ -14,6 +14,12 @@ class OrderInvoiceController extends Controller
 {
     public function forAdmin(Order $order): StreamedResponse|RedirectResponse
     {
+        if (! $order->isPaid()) {
+            return redirect()
+                ->back(fallback: url('/admin/orders'))
+                ->with('invoice_error', 'Für unbezahlte Bestellungen gibt es keine Rechnung. Bitte zuerst den Zahlungsstatus auf „Bezahlt“ setzen.');
+        }
+
         return $this->respond($order, 'admin.orders.invoice');
     }
 
@@ -27,6 +33,8 @@ class OrderInvoiceController extends Controller
         if ($flashedId !== null && (int) $flashedId !== (int) $order->id) {
             abort(404);
         }
+
+        abort_unless($order->isPaid(), 404);
 
         return $this->respond($order, 'checkout.invoice');
     }

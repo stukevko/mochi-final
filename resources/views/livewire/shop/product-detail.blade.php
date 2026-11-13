@@ -195,7 +195,17 @@
                         <span x-text="open ? '−' : '+'"></span>
                     </button>
                     <div x-show="open" x-transition.opacity.duration.200ms class="border-t border-white/10 px-5 py-4 text-sm text-mochi-muted">
-                        Versand in 1–3 Werktagen. 30 Tage Rückgabe. Support antwortet in der Regel innerhalb von 24 Stunden.
+                        @php $shippingReturnInfo = trim((string) \App\Models\Setting::get('shipping_return_info', '')); @endphp
+                        @if ($shippingReturnInfo !== '')
+                            <p class="whitespace-pre-line">{{ $shippingReturnInfo }}</p>
+                        @else
+                            <p>
+                                Du hast ein gesetzliches Widerrufsrecht von 14 Tagen — Details in der
+                                <a href="{{ route('legal.widerruf') }}" class="font-medium text-mochi-coral underline-offset-2 hover:underline">Widerrufsbelehrung</a>.
+                                Infos zu Versand und Lieferung findest du auf der
+                                <a href="{{ route('service') }}#versand" class="font-medium text-mochi-coral underline-offset-2 hover:underline">Service-Seite</a>.
+                            </p>
+                        @endif
                     </div>
                 </div>
 

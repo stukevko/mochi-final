@@ -3,7 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Setting;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\InvoicePdf;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -41,7 +41,13 @@ class OrderConfirmed extends Mailable implements ShouldQueue
     public function attachments(): array
     {
         $order = $this->order->loadMissing('items');
-        $pdf = Pdf::loadView('pdf.invoice', ['order' => $order])->output();
+
+        // Rechnung nur für bezahlte Bestellungen anhängen (eine Rechnung braucht eine vergebene Nummer).
+        if (! $order->isPaid()) {
+            return [];
+        }
+
+        $pdf = InvoicePdf::output($order);
 
         return [
             Attachment::fromData(fn () => $pdf, 'rechnung-'.$order->order_number.'.pdf')

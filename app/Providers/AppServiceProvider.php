@@ -107,7 +107,6 @@ class AppServiceProvider extends ServiceProvider
 
         $frontLayoutKeys = [
             'layouts.app',
-            'components.layouts.app',
             'home',
             'events.index',
             'events.calendar',

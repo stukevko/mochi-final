@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
-use App\Services\Payments\PaymentProviderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
@@ -14,46 +13,22 @@ class PaymentCheckoutReturnTest extends TestCase
 
     public function test_unsigned_payment_return_is_rejected(): void
     {
-        $order = $this->createPendingOrder('stripe');
+        $order = $this->createPendingOrder('sumup');
 
         $this->get(route('payment.return', [
-            'provider' => 'stripe',
+            'provider' => 'sumup',
             'order' => $order->id,
         ]))->assertForbidden();
     }
 
-    public function test_stripe_return_does_not_expose_success_when_unpaid(): void
+    public function test_only_sumup_is_accepted_as_provider(): void
     {
-        $order = $this->createPendingOrder('stripe');
+        $order = $this->createPendingOrder('sumup');
 
-        $response = $this->get(URL::temporarySignedRoute(
-            'payment.return',
-            now()->addDay(),
-            ['provider' => 'stripe', 'order' => $order->id],
-        ));
-
-        $response->assertRedirect(route('checkout'));
-        $response->assertSessionHas('payment_error');
-
-        $order->refresh();
-        $this->assertSame('pending', $order->payment_status);
-    }
-
-    public function test_paypal_return_does_not_expose_success_when_unpaid(): void
-    {
-        $order = $this->createPendingOrder('paypal');
-
-        $response = $this->get(URL::temporarySignedRoute(
-            'payment.return',
-            now()->addDay(),
-            ['provider' => 'paypal', 'order' => $order->id],
-        ));
-
-        $response->assertRedirect(route('checkout'));
-        $response->assertSessionHas('payment_error');
-
-        $order->refresh();
-        $this->assertSame('pending', $order->payment_status);
+        $this->get('/checkout/return/stripe/'.$order->id)->assertNotFound();
+        $this->get('/checkout/return/paypal/'.$order->id)->assertNotFound();
+        $this->post('/webhooks/payment/stripe')->assertNotFound();
+        $this->post('/webhooks/payment/paypal')->assertNotFound();
     }
 
     public function test_sumup_return_does_not_expose_success_when_unpaid(): void
@@ -87,25 +62,6 @@ class PaymentCheckoutReturnTest extends TestCase
 
         $order->refresh();
         $this->assertSame('pending', $order->payment_status);
-    }
-
-    public function test_stripe_checkout_uses_signed_success_url_with_session_placeholder(): void
-    {
-        $order = $this->createPendingOrder('stripe');
-
-        $signedBase = app(PaymentProviderService::class)->signedPaymentReturnUrl('stripe', $order);
-
-        $this->assertStringContainsString('signature=', $signedBase);
-        $this->assertStringContainsString('/checkout/return/stripe/'.$order->id, $signedBase);
-
-        $withSession = $signedBase.'&session_id={CHECKOUT_SESSION_ID}';
-        $this->assertStringContainsString('&session_id={CHECKOUT_SESSION_ID}', $withSession);
-
-        $request = \Illuminate\Http\Request::create(
-            str_replace('{CHECKOUT_SESSION_ID}', 'cs_test_123', $withSession),
-            'GET',
-        );
-        $this->assertTrue($request->hasValidSignatureWhileIgnoring(['session_id']));
     }
 
     private function createPendingOrder(string $paymentMethod, array $overrides = []): Order

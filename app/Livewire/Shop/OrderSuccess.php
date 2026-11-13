@@ -29,6 +29,11 @@ class OrderSuccess extends Component
             abort(404);
         }
 
+        // Die Erfolgsseite gibt es nur für bezahlte Bestellungen.
+        abort_unless($order->isPaid(), 404);
+
+        session()->forget('pending_order_id');
+
         $this->order = $order;
     }
 

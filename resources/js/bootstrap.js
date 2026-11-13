@@ -1,4 +1,1 @@
-import axios from 'axios';
-window.axios = axios;
-
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+// Bewusst leer: axios wurde nirgends genutzt (Livewire/fetch übernehmen alle Requests) und kostete ~35 KB.

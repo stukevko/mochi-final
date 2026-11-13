@@ -16,6 +16,11 @@ final class InvoicePdf
     {
         $order->loadMissing('items');
 
+        // Bezahlt, aber noch ohne Nummer (z. B. im Admin als bezahlt markiert) → jetzt fortlaufend vergeben.
+        if ($order->exists) {
+            $order->ensureInvoiceNumber();
+        }
+
         return Pdf::loadView('pdf.invoice', ['order' => $order])->output();
     }
 

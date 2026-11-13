@@ -62,7 +62,12 @@ class ManageMerchantSettings extends Page
             'currency' => 'EUR',
             'currency_symbol' => '€',
             'tax_rate' => '19',
-            'invoice_prefix' => 'INV-',
+            'invoice_prefix' => 'RE-',
+            'tax_number' => '',
+            'tax_id' => '',
+            'shipping_flat_rate' => '0',
+            'free_shipping_from' => '0',
+            'shipping_return_info' => '',
             'order_notification_email' => '',
         ];
 
@@ -166,7 +171,40 @@ class ManageMerchantSettings extends Page
                                             ->label('Rechnungs-Präfix')
                                             ->required()
                                             ->maxLength(20)
-                                            ->helperText('Vor der fortlaufenden Nummer, z. B. RE- oder INV-.'),
+                                            ->helperText('Vor der fortlaufenden Nummer, z. B. RE- → RE-2026-00001. Die Nummer wird bei Zahlungseingang automatisch und lückenlos vergeben.'),
+                                        Forms\Components\TextInput::make('tax_number')
+                                            ->label('Steuernummer')
+                                            ->maxLength(40)
+                                            ->helperText('Pflichtangabe auf Rechnungen — Steuernummer ODER USt-IdNr. muss ausgefüllt sein.'),
+                                        Forms\Components\TextInput::make('tax_id')
+                                            ->label('USt-IdNr.')
+                                            ->maxLength(40)
+                                            ->helperText('z. B. DE123456789. Bei 0 % MwSt. erscheint auf der Rechnung automatisch der Kleinunternehmer-Hinweis (§ 19 UStG).'),
+                                    ])->columns(2),
+
+                                Section::make('Versand')
+                                    ->description('Gilt für jede Bestellung im Shop. Beträge inkl. MwSt.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('shipping_flat_rate')
+                                            ->label('Versandkosten pauschal')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step('0.01')
+                                            ->suffix('€')
+                                            ->helperText('0 = versandkostenfrei.'),
+                                        Forms\Components\TextInput::make('free_shipping_from')
+                                            ->label('Versandkostenfrei ab Warenwert')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step('0.01')
+                                            ->suffix('€')
+                                            ->helperText('0 = keine Freigrenze.'),
+                                        Forms\Components\Textarea::make('shipping_return_info')
+                                            ->label('Hinweis „Versand & Rückgabe“ auf der Produktseite')
+                                            ->rows(3)
+                                            ->maxLength(1000)
+                                            ->helperText('Nur zusagen, was wirklich gilt (Lieferzeit, Rückgabefrist). Leer = Verweis auf Widerrufsbelehrung und Service-Seite.')
+                                            ->columnSpanFull(),
                                     ])->columns(2),
                             ]),
 
@@ -207,6 +245,11 @@ class ManageMerchantSettings extends Page
                 'currency_symbol' => ['type' => 'text', 'group' => 'general'],
                 'tax_rate' => ['type' => 'number', 'group' => 'general'],
                 'invoice_prefix' => ['type' => 'text', 'group' => 'general'],
+                'tax_number' => ['type' => 'text', 'group' => 'general'],
+                'tax_id' => ['type' => 'text', 'group' => 'general'],
+                'shipping_flat_rate' => ['type' => 'number', 'group' => 'general'],
+                'free_shipping_from' => ['type' => 'number', 'group' => 'general'],
+                'shipping_return_info' => ['type' => 'textarea', 'group' => 'general'],
                 'order_notification_email' => ['type' => 'text', 'group' => 'email'],
             ];
 

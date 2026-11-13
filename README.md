@@ -1,6 +1,6 @@
 # Mochi Cards – CMS & Shop
 
-Ein System für alles: Online-Shop (SumUp, Stripe, PayPal, Vorkasse), Events mit Kalender, News/Journal,
+Ein System für alles: Online-Shop (Zahlung über SumUp), Events mit Kalender, News/Journal,
 CMS-Seiten und Rechtstexte – verwaltet im **Mochi Hub** (Admin unter `/admin`).
 
 Shop und Admin sind als **App installierbar** (Handy, Tablet, Desktop): eigenes Icon, Vollbild ohne
@@ -68,6 +68,23 @@ LOG_LEVEL=warning
 Danach `php artisan shop:go-live-check`.
 
 ---
+
+## Verkauf & Rechnungen
+
+Bezahlt wird ausschließlich über **SumUp** (`SUMUP_TOKEN`, `SUMUP_MERCHANT_CODE` in `.env`).
+
+1. Kunde bestellt → Ware wird **30 Minuten reserviert**, Weiterleitung zur SumUp-Bezahlseite.
+2. Zahlung wird dreifach abgesichert erkannt: Rückkehr des Kunden, SumUp-Webhook
+   (`POST /webhooks/payment/sumup`) und der Abgleich `shop:reconcile-payments` (alle 5 Minuten).
+   Der Status wird immer direkt bei SumUp nachgefragt — gefälschte Meldungen bewirken nichts.
+3. Bei Zahlungseingang: fortlaufende Rechnungsnummer (`RE-2026-00001`), Bestätigungs-Mail mit
+   PDF-Rechnung an den Kunden, Benachrichtigung an den Laden.
+4. Nicht bezahlt → Bestellung verfällt, Ware geht automatisch zurück in den Bestand.
+   Storno im Admin bucht die Ware ebenfalls zurück.
+
+**Wichtig:** Der Cron/Scheduler muss laufen (siehe oben), sonst werden abgebrochene Bestellungen
+nicht freigegeben. Im Admin unter *Global Settings → Buchhaltung*: Steuernummer oder USt-IdNr.,
+Rechnungs-Präfix, MwSt.-Satz und Versandkosten pflegen.
 
 ## Updates & Sicherheit
 

@@ -90,7 +90,9 @@ class ManageSystemServices extends Page
                             ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) wird auf dem Server per .env konfiguriert (MAIL_MAILER, MAIL_HOST, …). Bei Problemen wenden Sie sich an Ihre Hosting-Firma oder Agentur.'),
                     ]),
 
+                // Verkauf läuft ausschließlich über SumUp — Vorkasse ist im Checkout abgeschaltet.
                 Section::make('Vorkasse / Überweisung')
+                    ->visible(false)
                     ->schema([
                         Forms\Components\Toggle::make('prepayment_enabled')
                             ->label('Vorkasse im Checkout anbieten')

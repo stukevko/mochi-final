@@ -15,6 +15,15 @@ class SumUpCheckoutRedirectTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Die Tests vergleichen signierte Links mit Ablaufzeit. Ohne eingefrorene Uhr
+        // schlagen sie sporadisch fehl, wenn zwischen Anfrage und Vergleich die Sekunde wechselt.
+        $this->freezeTime();
+    }
+
     public function test_sumup_checkout_includes_redirect_url_for_hosted_checkout(): void
     {
         config([

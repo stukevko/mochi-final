@@ -27,7 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Technische Einstellungen aus dem Admin (SumUp, Postfach, …) überschreiben die .env —
+        // vor dem Start aller Dienste, damit Mailer, Checkout und Admin-Panel sie sehen.
+        $this->app->booting(static fn () => \App\Support\RuntimeConfig::apply());
     }
 
     /**

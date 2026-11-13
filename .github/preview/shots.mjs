@@ -70,8 +70,9 @@ await safe('d-admin', async () => {
     await d.goto(base + '/admin/orders', { waitUntil: 'networkidle' }); await shot(d, '14-admin-bestellungen');
     await d.goto(base + '/admin/sumup-abgleich', { waitUntil: 'networkidle' }); await shot(d, '15-admin-kasse-und-shop', { fullPage: true });
     await d.goto(base + '/admin/manage-merchant-settings', { waitUntil: 'networkidle' }); await shot(d, '16-admin-einstellungen');
+    await d.goto(base + '/admin/zugangsdaten', { waitUntil: 'networkidle' }); await shot(d, '19-admin-zugangsdaten', { fullPage: true });
 });
-await safe('m-admin', async () => { await login(m); await shot(m, '17-handy-admin-dashboard'); await m.goto(base + '/admin/orders', { waitUntil: 'networkidle' }); await shot(m, '18-handy-admin-bestellungen'); });
+await safe('m-admin', async () => { await login(m); await shot(m, '17-handy-admin-dashboard'); await m.goto(base + '/admin/zugangsdaten', { waitUntil: 'networkidle' }); await shot(m, '20-handy-admin-zugangsdaten'); await m.goto(base + '/admin/orders', { waitUntil: 'networkidle' }); await shot(m, '18-handy-admin-bestellungen'); });
 
 await browser.close();
 // trigger 1794577253

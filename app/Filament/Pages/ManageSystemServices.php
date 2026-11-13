@@ -87,7 +87,7 @@ class ManageSystemServices extends Page
                     ->schema([
                         Forms\Components\Placeholder::make('mail_hint')
                             ->label('Hinweis')
-                            ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) wird auf dem Server per .env konfiguriert (MAIL_MAILER, MAIL_HOST, …). Bei Problemen wenden Sie sich an Ihre Hosting-Firma oder Agentur.'),
+                            ->content('Das E-Mail-Postfach für Bestellbestätigungen und Rechnungen trägst du unter „Zugangsdaten & Technik“ ein. Dort kannst du auch eine Test-Mail verschicken.'),
                     ]),
 
                 // Verkauf läuft ausschließlich über SumUp — Vorkasse ist im Checkout abgeschaltet.

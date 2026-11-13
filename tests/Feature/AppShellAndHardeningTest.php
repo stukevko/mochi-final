@@ -73,6 +73,63 @@ class AppShellAndHardeningTest extends TestCase
         $this->get('/')->assertOk()->assertSee('Zum Shop');
     }
 
+    public function test_technical_settings_from_admin_override_env_and_keep_secrets_encrypted(): void
+    {
+        config(['services.sumup.token' => null, 'mail.default' => 'log']);
+
+        \App\Support\RuntimeConfig::put('sumup_token', 'sup_sk_geheim');
+        \App\Support\RuntimeConfig::put('sumup_merchant_code', 'MC999');
+        \App\Support\RuntimeConfig::put('mail_host', 'smtp.example.test');
+        \App\Support\RuntimeConfig::put('mail_port', '465');
+        \App\Support\RuntimeConfig::put('mail_password', 'postfach-geheim');
+        \App\Support\RuntimeConfig::put('require_2fa', '1');
+        \App\Support\RuntimeConfig::apply();
+
+        $this->assertSame('sup_sk_geheim', config('services.sumup.token'));
+        $this->assertSame('MC999', config('services.sumup.merchant_code'));
+        $this->assertSame('smtp', config('mail.default'));
+        $this->assertSame('smtps', config('mail.mailers.smtp.scheme'));
+        $this->assertSame('postfach-geheim', config('mail.mailers.smtp.password'));
+        $this->assertTrue(config('filament.require_2fa'));
+
+        // In der Datenbank steht das Geheimnis nie im Klartext.
+        $raw = (string) DB::table('settings')->where('key', 'sumup_token')->value('value');
+        $this->assertNotSame('', $raw);
+        $this->assertStringNotContainsString('sup_sk_geheim', $raw);
+    }
+
+    public function test_admin_can_save_technical_settings_without_wiping_stored_secrets(): void
+    {
+        $admin = User::factory()->admin()->create();
+        \App\Support\RuntimeConfig::put('sumup_token', 'alter-schluessel');
+
+        $this->actingAs($admin)->get('/admin/zugangsdaten')
+            ->assertOk()
+            ->assertSee('E-Mail-Postfach')
+            ->assertDontSee('alter-schluessel');
+
+        \Livewire\Livewire::actingAs($admin)
+            ->test(\App\Filament\Pages\ManageTechnicalSettings::class)
+            ->set('data.sumup_merchant_code', 'MC777')
+            ->set('data.mail_host', 'smtp.example.test')
+            ->set('data.sumup_token', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $values = \App\Support\RuntimeConfig::values();
+        $this->assertSame('alter-schluessel', $values['sumup_token']);
+        $this->assertSame('MC777', $values['sumup_merchant_code']);
+        $this->assertSame('smtp.example.test', $values['mail_host']);
+    }
+
+    public function test_forms_work_in_production_without_spam_protection_keys(): void
+    {
+        config(['services.turnstile.secret' => null]);
+        $this->app->detectEnvironment(fn () => 'production');
+
+        $this->assertTrue(\App\Services\TurnstileVerifier::verify('', '127.0.0.1'));
+    }
+
     public function test_checkout_pages_are_never_cached(): void
     {
         $cacheControl = (string) $this->get('/cart')->headers->get('Cache-Control');

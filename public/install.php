@@ -222,9 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
             $_SESSION = [];
             session_destroy();
 
-            $hint = $smtpHost === ''
-                ? '<p class="note">Es wurde kein E-Mail-Postfach eingetragen. Bestellbestätigungen werden deshalb noch nicht verschickt. Die Zugangsdaten deines Postfachs kannst du später in der Datei <code>.env</code> nachtragen (MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD) — oder uns kurz Bescheid geben.</p>'
-                : '';
+            $hint = '<p class="note">'.($smtpHost === '' ? 'Es ist noch kein E-Mail-Postfach eingetragen — Bestellbestätigungen werden deshalb noch nicht verschickt. ' : '').'SumUp, Postfach und alles Weitere trägst du bequem im Admin unter <strong>Konfiguration → Zugangsdaten &amp; Technik</strong> ein. Dort gibt es auch Test-Knöpfe.</p>';
 
             page('Fertig — der Shop läuft', '<p>Alles ist eingerichtet. Melde dich jetzt mit deiner E-Mail-Adresse und dem gewählten Passwort im Admin an.</p>'.$hint.'<p><a class="btn" href="/admin">Zum Admin</a> <a class="btn ghost" href="/">Shop ansehen</a></p><p class="small">Nächste Schritte im Admin: Logo hochladen, Rechtstexte eintragen, Steuernummer und Versand pflegen, Artikel aus SumUp übernehmen.</p>');
             exit;
@@ -270,11 +268,11 @@ $body .= '<p>Vier kurze Angaben, dann läuft dein Shop unter <strong>'.$e($appUr
 <label>Passwort<input type="password" name="admin_password" required minlength="10" autocomplete="new-password"><small>Mindestens 10 Zeichen mit Buchstaben und Zahlen.</small></label>
 <label>Passwort wiederholen<input type="password" name="admin_password_repeat" required minlength="10" autocomplete="new-password"></label>
 
-<h2>3. SumUp <span class="opt">kann später nachgetragen werden</span></h2>
+<h2>3. SumUp <span class="opt">geht auch später im Admin</span></h2>
 <label>SumUp API-Schlüssel<input name="sumup_token" value="'.$val('sumup_token').'"><small>In SumUp unter Einstellungen → Entwickler → API-Schlüssel. Ohne Schlüssel kann noch niemand bezahlen.</small></label>
 <label>SumUp Händler-Code<input name="sumup_merchant" value="'.$val('sumup_merchant').'"><small>Steht in SumUp im Profil, z. B. MC1A2B3C.</small></label>
 
-<h2>4. E-Mail-Postfach <span class="opt">kann später nachgetragen werden</span></h2>
+<h2>4. E-Mail-Postfach <span class="opt">geht auch später im Admin</span></h2>
 <label>Postausgangsserver (SMTP)<input name="mail_host" placeholder="z. B. smtp.dein-hoster.de" value="'.$val('mail_host').'"><small>Die Daten eines Postfachs bei deinem Hoster. Darüber gehen Bestellbestätigungen und Rechnungen raus.</small></label>
 <div class="row"><label>Port<input name="mail_port" inputmode="numeric" value="'.$val('mail_port', '587').'"></label><label>Benutzer (meist die E-Mail-Adresse)<input name="mail_user" value="'.$val('mail_user').'"></label></div>
 <label>Passwort des Postfachs<input type="password" name="mail_pass" autocomplete="new-password"></label>

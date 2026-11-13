@@ -35,6 +35,7 @@ class Setting extends Model
     protected static function forgetCacheKey(string $key): void
     {
         unset(self::$memo[$key]);
+        Cache::forget(\App\Support\RuntimeConfig::CACHE_KEY);
         Cache::forget("setting.{$key}");
         Cache::forget("setting.v2.{$key}");
     }

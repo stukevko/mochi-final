@@ -20,8 +20,10 @@ final class TurnstileVerifier
 
     public static function verify(?string $token, ?string $remoteIp): bool
     {
+        // Spam-Schutz nicht eingerichtet → Formular bleibt nutzbar (Rate-Limits schützen weiterhin).
+        // Vorher: in Production ohne Schlüssel schlug JEDE Bestellung und Kontaktanfrage fehl.
         if (! self::secretConfigured()) {
-            return ! app()->environment('production');
+            return true;
         }
 
         if (! is_string($token) || trim($token) === '') {

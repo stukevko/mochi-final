@@ -28,6 +28,9 @@ class GettingStartedWidget extends Widget
 
     protected static ?int $sort = -100;
 
+    /** Sofort anzeigen, nicht nachladen — die Liste ist das Erste, was man sehen soll. */
+    protected static bool $isLazy = false;
+
     protected int|string|array $columnSpan = 'full';
 
     public static function canView(): bool
@@ -69,7 +72,7 @@ class GettingStartedWidget extends Widget
                 'text' => 'Name, Adresse und Steuernummer stehen auf jeder Rechnung. Hier stellst du auch die Versandkosten ein.',
                 'url' => ManageMerchantSettings::getUrl(),
                 'action' => 'Shop-Daten öffnen',
-                'done' => $filled('shop_address') && ($filled('tax_number') || $filled('tax_id')),
+                'done' => $filled('shop_legal_name') && $filled('shop_address') && ($filled('tax_number') || $filled('tax_id')),
                 'optional' => false,
             ],
             [

@@ -188,6 +188,30 @@ class PaymentCompletionService
             }
         }
 
+        // Glocke im Admin-Bereich („Neue Bestellung“) für alle Administratoren.
+        if (empty($paymentData['admin_bell_sent_at'])) {
+            try {
+                $admins = \App\Models\User::query()->where('role', 'admin')->get();
+                if ($admins->isNotEmpty()) {
+                    \Filament\Notifications\Notification::make()
+                        ->title('Neue Bestellung '.$order->order_number)
+                        ->body(\App\Support\MoneyFormatter::format((float) $order->total).' · bezahlt per SumUp')
+                        ->icon('heroicon-o-shopping-bag')
+                        ->success()
+                        ->actions([
+                            \Filament\Actions\Action::make('open')
+                                ->label('Bestellung öffnen')
+                                ->url(\App\Filament\Resources\OrderResource::getUrl('view', ['record' => $order]))
+                                ->markAsRead(),
+                        ])
+                        ->sendToDatabase($admins);
+                }
+                $paymentData['admin_bell_sent_at'] = now()->toIso8601String();
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
         $order->forceFill(['payment_data' => $paymentData])->save();
     }
 

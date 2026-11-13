@@ -71,6 +71,9 @@ class AdminPanelProvider extends PanelProvider
                 ],
                 isRequired: $requireTwoFactor,
             )
+            // Glocke oben rechts: neue Bestellungen erscheinen von selbst (alle 30 Sekunden geprüft).
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->brandName('Mochi Hub')
             ->font(
                 'Instrument Sans',

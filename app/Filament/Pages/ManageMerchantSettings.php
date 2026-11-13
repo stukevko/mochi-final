@@ -63,6 +63,7 @@ class ManageMerchantSettings extends Page
             'currency_symbol' => '€',
             'tax_rate' => '19',
             'invoice_prefix' => 'RE-',
+            'shop_legal_name' => '',
             'tax_number' => '',
             'tax_id' => '',
             'shipping_flat_rate' => '0',
@@ -172,6 +173,12 @@ class ManageMerchantSettings extends Page
                                             ->required()
                                             ->maxLength(20)
                                             ->helperText('Vor der fortlaufenden Nummer, z. B. RE- → RE-2026-00001. Die Nummer wird bei Zahlungseingang automatisch und lückenlos vergeben.'),
+                                        Forms\Components\TextInput::make('shop_legal_name')
+                                            ->label('Vollständiger Name des Unternehmens')
+                                            ->placeholder('z. B. Mochi Cards – Inh. Mia Muster   oder   Mochi Cards GmbH')
+                                            ->maxLength(160)
+                                            ->helperText('So wie im Impressum und beim Finanzamt. Steht als Rechnungssteller auf jeder Rechnung.')
+                                            ->columnSpanFull(),
                                         Forms\Components\TextInput::make('tax_number')
                                             ->label('Steuernummer')
                                             ->maxLength(40)
@@ -245,6 +252,7 @@ class ManageMerchantSettings extends Page
                 'currency_symbol' => ['type' => 'text', 'group' => 'general'],
                 'tax_rate' => ['type' => 'number', 'group' => 'general'],
                 'invoice_prefix' => ['type' => 'text', 'group' => 'general'],
+                'shop_legal_name' => ['type' => 'text', 'group' => 'general'],
                 'tax_number' => ['type' => 'text', 'group' => 'general'],
                 'tax_id' => ['type' => 'text', 'group' => 'general'],
                 'shipping_flat_rate' => ['type' => 'number', 'group' => 'general'],

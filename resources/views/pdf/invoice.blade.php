@@ -6,6 +6,7 @@
     $order->loadMissing('items');
 
     $shopName = ShopBranding::displayName();
+    $legalName = trim((string) Setting::get('shop_legal_name', ''));
     $shopAddress = trim((string) Setting::get('shop_address', ''));
     $shopEmail = trim((string) Setting::get('shop_email', ''));
     $shopPhone = trim((string) Setting::get('shop_phone', ''));
@@ -167,8 +168,11 @@
                 @else
                     <p class="shop-name">{{ $shopName }}</p>
                 @endif
+                @if ($legalName !== '' && ($logoPath || $legalName !== $shopName))
+                    <p style="margin: 8px 0 0; font-weight: bold;">{{ $legalName }}</p>
+                @endif
                 @if ($shopAddress !== '')
-                    <p class="muted" style="margin: 8px 0 0; white-space: pre-line;">{{ $shopAddress }}</p>
+                    <p class="muted" style="margin: {{ $legalName !== '' ? '2px' : '8px' }} 0 0; white-space: pre-line;">{{ $shopAddress }}</p>
                 @endif
                 @if ($shopEmail !== '' || $shopPhone !== '')
                     <p class="muted" style="margin: 6px 0 0;">
@@ -305,6 +309,14 @@
             Vielen Dank für deinen Einkauf bei {{ $shopName }}.
             Bei Fragen zu dieser Rechnung wende dich bitte an
             {{ $shopEmail !== '' ? $shopEmail : 'unseren Kundenservice' }}.
+        </p>
+        <p style="margin: 6px 0 0;">
+            {{ implode(' · ', array_filter([
+                $legalName !== '' ? $legalName : $shopName,
+                preg_replace('/\s*\R\s*/u', ', ', $shopAddress),
+                $taxNumber !== '' ? 'St.-Nr. '.$taxNumber : '',
+                $taxId !== '' ? 'USt-IdNr. '.$taxId : '',
+            ])) }}
         </p>
     </div>
 </body>

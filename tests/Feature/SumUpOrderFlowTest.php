@@ -116,6 +116,7 @@ class SumUpOrderFlowTest extends TestCase
     public function test_webhook_marks_order_paid_assigns_invoice_number_and_sends_mails(): void
     {
         Mail::fake();
+        $admin = \App\Models\User::factory()->admin()->create();
         Setting::set('shop_email', 'laden@example.test', 'text');
         Setting::set('invoice_prefix', 'RE-', 'text');
 
@@ -146,8 +147,36 @@ class SumUpOrderFlowTest extends TestCase
         // Bestand wurde bei der Reservierung abgezogen — nicht noch einmal bei Zahlung.
         $this->assertSame(3, (int) $product->fresh()->stock);
 
-        Mail::assertQueued(OrderConfirmed::class, 2);
-        Mail::assertQueued(AdminOrderNotification::class, 2);
+        // Sofortversand (keine Warteschlange nötig — läuft so auch auf einfachem Webspace).
+        Mail::assertSent(OrderConfirmed::class, 2);
+        Mail::assertSent(AdminOrderNotification::class, 2);
+
+        // Glocke im Admin: jede Bestellung genau einmal.
+        $this->assertSame(2, $admin->notifications()->count());
+        $this->assertStringContainsString($first->order_number, json_encode($admin->notifications()->pluck('data')));
+    }
+
+    public function test_invoice_pdf_carries_all_mandatory_details(): void
+    {
+        Setting::set('shop_legal_name', 'Mochi Cards – Inh. Mia Muster', 'text');
+        Setting::set('shop_address', "Hauptstraße 1\n67346 Speyer", 'textarea');
+        Setting::set('tax_number', '41/123/45678', 'text');
+
+        $product = $this->createProduct(stock: 5, price: 20.00);
+        $order = $this->createPendingOrder($product, reserve: true, checkoutId: 'co-a');
+        $order->forceFill(['payment_status' => 'paid', 'status' => 'processing'])->save();
+        $order->ensureInvoiceNumber();
+
+        $html = view('pdf.invoice', ['order' => $order->fresh()])->render();
+
+        foreach (['Rechnung', $order->fresh()->invoice_number, 'Mochi Cards – Inh. Mia Muster', '67346 Speyer', 'Steuernummer: 41/123/45678', 'Rechnungsdatum', 'Leistungsdatum', 'Rechnungsempfänger', 'Rechnungsbetrag'] as $needle) {
+            $this->assertStringContainsString($needle, $html);
+        }
+        // Entweder ausgewiesene MwSt. oder der Kleinunternehmer-Hinweis.
+        $this->assertTrue(str_contains($html, 'MwSt.') || str_contains($html, '§ 19 UStG'));
+
+        // Das PDF lässt sich wirklich erzeugen (mit Logo).
+        $this->assertStringStartsWith('%PDF', \App\Support\InvoicePdf::output($order->fresh()));
     }
 
     public function test_forged_webhook_cannot_mark_order_paid(): void

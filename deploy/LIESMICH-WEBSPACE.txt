@@ -1,33 +1,37 @@
 MOCHI CARDS – INSTALLATION AUF NORMALEM WEBSPACE
 ================================================
 
-Du brauchst: Webspace mit PHP 8.3 oder neuer, eine Domain (oder Subdomain) und ein FTP-Programm
-(z. B. FileZilla). Kein SSH, kein Cronjob, keine Kommandozeile.
+Du brauchst: Webspace mit PHP 8.3 oder neuer und eine Domain (oder Subdomain).
+Kein SSH, kein Cronjob, keine Kommandozeile, keine Datenbank anlegen.
 
-INSTALLIEREN (ca. 10 Minuten)
------------------------------
-1. Diese ZIP-Datei auf dem Computer entpacken.
-2. ALLE entpackten Dateien und Ordner per FTP in den Ordner der Domain hochladen.
-   Wichtig: auch die Datei ".htaccess" (im FTP-Programm ggf. "versteckte Dateien anzeigen" einschalten).
-3. Im Browser die Domain öffnen, z. B. https://mein-shop.de
-   -> Der Einrichtungs-Assistent startet von selbst.
-4. Shop-Name, E-Mail und Passwort eingeben, auf "Shop einrichten" klicken. Fertig.
+INSTALLIEREN (ca. 5 Minuten) – DER EINFACHE WEG
+-----------------------------------------------
+1. Zwei Dateien in den Ordner der Domain hochladen (Dateimanager des Hosters oder FTP):
+      mochi-setup.php
+      mochi-cards-webspace.zip      (NICHT entpacken!)
+2. Im Browser öffnen:  https://mein-shop.de/mochi-setup.php
+   -> Der Shop entpackt sich selbst auf dem Server.
+3. Auf "Shop einrichten" klicken, Shop-Name, E-Mail und Passwort eingeben. Fertig.
 
-Danach: https://mein-shop.de/admin öffnen und anmelden.
+Danach: https://mein-shop.de/admin öffnen und anmelden. Auf der Startseite des Admin-Bereichs
+steht die Liste "Erste Schritte" – einfach von oben nach unten abarbeiten.
 
 UPDATE EINSPIELEN
 -----------------
-1. Neue ZIP-Datei entpacken.
-2. Alle Dateien per FTP hochladen und vorhandene Dateien ÜBERSCHREIBEN.
-   Deine Daten bleiben erhalten (sie liegen in ".env", "database" und "storage" – diese
-   werden vom Paket nicht überschrieben bzw. nicht mitgeliefert).
-3. Die Seite einmal im Browser öffnen – die Datenbank aktualisiert sich von selbst.
+Genau wie oben: die neue "mochi-cards-webspace.zip" und "mochi-setup.php" hochladen und
+https://mein-shop.de/mochi-setup.php öffnen. Deine Daten (Produkte, Bestellungen, Bilder,
+Einstellungen) bleiben erhalten, die Datenbank aktualisiert sich von selbst.
+
+ALTERNATIVE OHNE HELFER
+-----------------------
+ZIP am Computer entpacken und ALLE Dateien per FTP hochladen (auch die versteckte Datei
+".htaccess"), dann die Domain im Browser öffnen. Bei Updates vorhandene Dateien überschreiben.
 
 WENN ETWAS NICHT KLAPPT
 -----------------------
-- Der Assistent zeigt genau an, was auf dem Webspace fehlt (z. B. PHP-Version, Schreibrechte).
-- "Seite nicht gefunden" bei allen Unterseiten: Die Datei ".htaccess" fehlt oder der Hoster
-  hat "mod_rewrite" nicht aktiv -> Support des Hosters fragen.
+- Der Helfer und der Assistent sagen genau, was fehlt (z. B. PHP-Version, Schreibrechte).
+- "Seite nicht gefunden" bei allen Unterseiten: Der Hoster hat "mod_rewrite" nicht aktiv
+  -> Support des Hosters fragen.
 - Der Shop muss direkt unter einer Domain oder Subdomain liegen (nicht in einem Unterordner
   wie mein-shop.de/shop).
 

@@ -48,17 +48,21 @@ jobs:
           done
           (cd dist/mochi-cards && zip -qr ../mochi-cards-webspace.zip . )
           ls -lh dist/mochi-cards-webspace.zip
+          cp deploy/mochi-setup.php dist/mochi-setup.php
 
       - uses: actions/upload-artifact@v4
         with:
           name: mochi-cards-webspace
-          path: dist/mochi-cards-webspace.zip
+          path: |
+            dist/mochi-cards-webspace.zip
+            dist/mochi-setup.php
 
       - name: Testinstallation auf Apache (wie beim Hoster)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq apache2 libapache2-mod-php php-intl php-gd php-sqlite3 php-mbstring php-xml php-curl php-zip > /dev/null
-          sudo mkdir -p /var/www/shop && sudo unzip -q dist/mochi-cards-webspace.zip -d /var/www/shop
+          # Genau wie der Laden es macht: nur ZIP + Helfer hochladen, der Rest passiert im Browser.
+          sudo mkdir -p /var/www/shop && sudo cp dist/mochi-cards-webspace.zip dist/mochi-setup.php /var/www/shop/
           sudo chown -R www-data:www-data /var/www/shop
           sudo tee /etc/apache2/sites-available/000-default.conf > /dev/null <<'CONF'
           <VirtualHost *:80>
@@ -76,6 +80,16 @@ jobs:
           code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
           expect() { if [ "$2" != "$3" ]; then echo "FEHLER: $1 → $2 (erwartet $3)"; sudo tail -n 30 /var/www/shop/storage/logs/*.log 2>/dev/null; sudo tail -n 20 /var/log/apache2/error.log; exit 1; else echo "ok: $1 → $2"; fi; }
 
+          NEXT=0
+          for n in $(seq 1 60); do
+            curl -s "$B/mochi-setup.php?i=$NEXT" -o /tmp/setup.html
+            if grep -q '<!-- done -->' /tmp/setup.html; then echo "ok: Helfer hat entpackt (Durchlauf $n)"; break; fi
+            NEXT=$(grep -o '<!-- next:[0-9]*' /tmp/setup.html | grep -o '[0-9]*$' || true)
+            if [ -z "$NEXT" ]; then echo "FEHLER: Helfer bricht ab:"; sed 's/<[^>]*>/ /g' /tmp/setup.html | tr -s ' \n' | head -c 800; exit 1; fi
+          done
+          grep -q '<!-- done -->' /tmp/setup.html || { echo "FEHLER: Helfer wurde nicht fertig"; exit 1; }
+          expect "Helfer hat sich selbst gelöscht" "$(code $B/mochi-setup.php)" 404
+          if sudo test -e /var/www/shop/mochi-cards-webspace.zip; then echo "FEHLER: ZIP liegt noch im Webspace"; exit 1; fi
           expect "Start leitet zum Assistenten" "$(code $B/)" 302
           curl -s -c /tmp/c $B/install.php -o /tmp/form.html
           grep -q "Shop einrichten" /tmp/form.html || { echo "Assistent zeigt kein Formular:"; sed 's/<[^>]*>/ /g' /tmp/form.html | tr -s ' \n' | head -c 1500; exit 1; }
@@ -107,6 +121,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete webspace-paket --yes --cleanup-tag 2>/dev/null || true
-          gh release create webspace-paket dist/mochi-cards-webspace.zip --latest \
+          gh release create webspace-paket dist/mochi-cards-webspace.zip dist/mochi-setup.php --latest \
             --title "Webspace-Paket (aktuell)" \
             --notes "Fertiges Paket für normalen Webspace: entpacken, per FTP hochladen, Domain im Browser öffnen. Anleitung: LIESMICH.txt im Paket."

@@ -38,6 +38,6 @@ class HttpsUrlGenerationTest extends TestCase
         config(['app.url' => 'https://mochi-cards.de']);
 
         $this->assertStringStartsWith('https://', url('/build/assets/app.js'));
-        $this->assertStringStartsWith('https://', asset('images/mochi-logo-placeholder.png'));
+        $this->assertStringStartsWith('https://', asset('images/logo.svg'));
     }
 }

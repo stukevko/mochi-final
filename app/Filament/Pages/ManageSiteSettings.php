@@ -235,7 +235,7 @@ class ManageSiteSettings extends Page
                             ->disk('public')
                             ->directory('site/hero')
                             ->imageEditor()
-                            ->helperText('Ohne Upload wird das Platzhalter-Logo aus public/images/mochi-logo-placeholder.png verwendet.'),
+                            ->helperText('Ohne Upload wird das mitgelieferte Mochi-Cards-Logo verwendet.'),
                         FileUpload::make('hero_background_path')
                             ->label('Hero-Hintergrundbild (optional)')
                             ->image()

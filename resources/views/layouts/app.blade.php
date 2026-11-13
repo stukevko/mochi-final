@@ -43,10 +43,10 @@
                             aria-label="{{ $shopDisplayName ?? $siteName }}"
                         >
                             <img
-                                src="{{ $shopLogoUrl ?? asset('images/mochi-logo-placeholder.png') }}"
+                                src="{{ $shopLogoUrl ?? asset('images/logo.svg') }}"
                                 alt="{{ $shopDisplayName ?? $siteName }}"
-                                class="h-9 w-auto max-w-[11rem] object-contain sm:h-10 {{ ($shopLogoIsPlaceholder ?? true) ? 'opacity-95' : '' }}"
-                                width="176"
+                                class="h-9 w-auto max-w-[13rem] object-contain sm:h-10"
+                                width="208"
                                 height="40"
                             >
                         </a>

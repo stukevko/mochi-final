@@ -1,4 +1,4 @@
-<div class="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="relative mx-auto max-w-7xl px-4 pb-28 pt-5 sm:px-6 md:py-10 lg:px-8">
     <div
         wire:loading.flex
         wire:target="increment,decrement,remove,clear"
@@ -15,19 +15,8 @@
         </div>
     </div>
 
-    <div class="mb-8 flex items-end justify-between">
-        <div>
-            <h1 class="font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Warenkorb</h1>
-            <p class="mt-2 text-sm text-mochi-muted">Prüfe deine Artikel und passe die Menge an.</p>
-        </div>
-        @if (count($this->items) > 0)
-            <button
-                wire:click="clear"
-                class="rounded-xl border border-white/15 px-4 py-2 text-sm text-mochi-muted transition hover:border-mochi-accent/35 hover:bg-white/5 hover:text-white"
-            >
-                Alles entfernen
-            </button>
-        @endif
+    <div class="mb-5 md:mb-8">
+        <h1 class="font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Warenkorb</h1>
     </div>
     @if ($feedbackMessage !== '')
         <div class="mb-6 rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
@@ -204,14 +193,42 @@
                     <span class="text-mochi-muted">Zwischensumme</span>
                     <span class="font-semibold text-white">{{ $this->formatPrice($this->total) }}</span>
                 </div>
+                <div class="mt-2 flex items-center justify-between text-sm">
+                    <span class="text-mochi-muted">Versand</span>
+                    @php $cartShipping = \App\Support\ShippingCalculator::costFor((float) $this->total); @endphp
+                    <span class="font-semibold text-white">{{ $cartShipping > 0 ? $this->formatPrice($cartShipping) : 'Kostenfrei' }}</span>
+                </div>
+                <div class="mt-3 flex items-center justify-between border-t border-white/10 pt-3">
+                    <span class="text-sm text-mochi-muted">Gesamt inkl. MwSt.</span>
+                    <span class="text-lg font-bold tabular-nums text-white">{{ $this->formatPrice((float) $this->total + $cartShipping) }}</span>
+                </div>
                 <a
                     href="{{ route('checkout') }}"
                     wire:navigate
-                    class="mochi-gradient-button mochi-gradient-button-sm mt-6 inline-flex w-full items-center justify-center min-h-12"
+                    class="mochi-gradient-button mochi-gradient-button-sm mt-6 hidden w-full items-center justify-center min-h-12 md:inline-flex"
                 >
                     Zur Kasse
                 </a>
+                <button
+                    type="button"
+                    wire:click="clear"
+                    wire:confirm="Wirklich alle Artikel aus dem Warenkorb entfernen?"
+                    class="mt-4 w-full text-center text-xs font-medium text-mochi-muted transition hover:text-rose-300"
+                >
+                    Warenkorb leeren
+                </button>
             </aside>
+
+            {{-- Handy: „Zur Kasse“ immer sichtbar über der Tab-Leiste --}}
+            <div class="app-buybar md:hidden">
+                <div class="min-w-0">
+                    <p class="text-[11px] leading-tight text-mochi-muted">Gesamt</p>
+                    <p class="text-lg font-bold tabular-nums leading-tight text-white">{{ $this->formatPrice((float) $this->total + $cartShipping) }}</p>
+                </div>
+                <a href="{{ route('checkout') }}" wire:navigate class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 flex-1 items-center justify-center px-4">
+                    Zur Kasse
+                </a>
+            </div>
         </div>
     @endif
 </div>

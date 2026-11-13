@@ -8,7 +8,8 @@
 <html class="min-h-full bg-[#040712]" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        @include('partials.app-head')
         <title>@yield('title', config('mochicards.site_name'))</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml" sizes="any">
         @stack('meta')
@@ -38,42 +39,17 @@
                     <div class="relative flex min-w-0 flex-1 items-center justify-center md:flex-none md:justify-start">
                         <a
                             href="{{ route('home') }}"
-                            class="mochi-brand-link inline-flex max-w-[calc(100%-6.75rem)] items-center justify-center md:max-w-none md:justify-start"
+                            class="mochi-brand-link inline-flex items-center justify-center md:justify-start"
                             aria-label="{{ $shopDisplayName ?? $siteName }}"
                         >
                             <img
-                                src="{{ $shopLogoUrl ?? asset('images/mochi-logo-placeholder.png') }}"
+                                src="{{ $shopLogoUrl ?? asset('images/logo.svg') }}"
                                 alt="{{ $shopDisplayName ?? $siteName }}"
-                                class="h-9 w-auto max-w-[11rem] object-contain sm:h-10 {{ ($shopLogoIsPlaceholder ?? true) ? 'opacity-95' : '' }}"
-                                width="176"
+                                class="h-9 w-auto max-w-[13rem] object-contain sm:h-10"
+                                width="208"
                                 height="40"
                             >
                         </a>
-                        <a
-                            href="{{ route('shop') }}"
-                            class="absolute right-10 inline-flex shrink-0 items-center justify-center rounded-lg border border-white/15 p-2 text-white/90 transition hover:border-mochi-accent/40 hover:bg-white/5 hover:text-mochi-coral md:hidden"
-                            aria-label="Shop"
-                        >
-                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.25 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm3.75.375a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                                />
-                            </svg>
-                        </a>
-                        <button
-                            type="button"
-                            id="mochi-nav-toggle"
-                            class="absolute right-0 inline-flex shrink-0 items-center justify-center rounded-lg border border-white/15 p-2 text-white/90 transition hover:border-white/30 hover:bg-white/5 md:hidden"
-                            aria-controls="mochi-site-nav"
-                            aria-expanded="false"
-                            aria-label="Menü öffnen"
-                        >
-                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
-                            </svg>
-                        </button>
                     </div>
                     <nav
                         id="mochi-site-nav"
@@ -232,6 +208,8 @@
                 class="rounded-xl border border-white/15 bg-[#080c12] px-4 py-3 text-sm font-medium text-white shadow-lg"
             ></div>
         </div>
+
+        @include('partials.app-tabbar')
 
         @stack('scripts')
         @include('partials.cookie-consent')

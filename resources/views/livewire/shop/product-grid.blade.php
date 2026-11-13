@@ -1,12 +1,12 @@
-<div class="mx-auto max-w-6xl px-4 py-8 text-mochi-text sm:px-6 sm:py-12" x-data="{ mobileFiltersOpen: false }">
+<div class="mx-auto max-w-6xl px-4 py-5 text-mochi-text sm:px-6 sm:py-12" x-data="{ mobileFiltersOpen: false }">
     @php
         $breadcrumbLd = \App\Support\BreadcrumbJsonLd::forShop($this->currentCategory);
     @endphp
     <script type="application/ld+json">@json($breadcrumbLd)</script>
 
     <!-- Page Header -->
-    <div class="mb-8">
-        <h1 class="font-display text-3xl font-black tracking-tight text-white sm:text-4xl">
+    <div class="mb-4 sm:mb-8">
+        <h1 class="font-display text-2xl font-black tracking-tight text-white sm:text-4xl">
             @if($saleOnly)
                 Sale &amp; Angebote
             @else
@@ -93,44 +93,48 @@
 
         <!-- Product Grid Area -->
         <div class="lg:col-span-3">
-            <!-- Mobile Filter + Sort Bar -->
-            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <!-- Mobile Search: sticky unter dem Header, Daumen-freundlich -->
-                <div class="relative sticky top-16 z-30 -mx-4 border-b border-white/10 bg-[#080c12]/85 px-4 py-3 backdrop-blur-md lg:hidden">
-                    <input type="text" 
+            {{-- Werkzeugleiste: am Handy zwei kompakte Zeilen (Suche / Filter + Sortierung), damit Produkte sofort sichtbar sind. --}}
+            <div class="mb-5 space-y-2 lg:mb-6 lg:flex lg:items-center lg:justify-between lg:space-y-0">
+                <div class="relative lg:hidden">
+                    <label for="shop-search-mobile" class="sr-only">Produkte suchen</label>
+                    <input type="search"
+                           id="shop-search-mobile"
                            wire:model.live.debounce.300ms="search"
-                           placeholder="Suchen..."
-                           class="block min-h-11 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-11 pr-3 text-white ring-0 placeholder:text-mochi-muted focus:border-mochi-accent/35 focus:outline-none focus:ring-2 focus:ring-mochi-accent/25 sm:text-sm">
-                    <div class="pointer-events-none absolute inset-y-0 left-4 flex items-center pl-0">
-                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                           placeholder="Produkte suchen"
+                           enterkeyhint="search"
+                           class="block min-h-11 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-11 pr-3 text-white ring-0 placeholder:text-mochi-muted focus:border-mochi-accent/35 focus:outline-none focus:ring-2 focus:ring-mochi-accent/25">
+                    <div class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
+                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
                         </svg>
                     </div>
                 </div>
 
-                <!-- Results count -->
-                <p class="text-sm text-mochi-muted">
-                    <span class="font-medium">{{ $this->products->total() }}</span> Produkte gefunden
+                <p class="hidden text-sm text-mochi-muted lg:block">
+                    <span class="font-medium">{{ $this->products->total() }}</span> Produkte
                 </p>
-                <button type="button" @click="mobileFiltersOpen = true" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-mochi-muted transition hover:bg-white/5 hover:text-white lg:hidden">
-                    Filter
-                </button>
 
-                <!-- Sort Dropdown -->
-                <select wire:model.live="sortBy"
-                        class="min-h-11 rounded-xl border border-white/10 bg-white/5 py-2 pl-3 pr-8 text-sm text-white focus:border-mochi-accent/35 focus:outline-none focus:ring-2 focus:ring-mochi-accent/25">
-                    <option value="newest">Neueste zuerst</option>
-                    <option value="price_asc">Preis: niedrig → hoch</option>
-                    <option value="price_desc">Preis: hoch → niedrig</option>
-                    <option value="name_asc">Name: A → Z</option>
-                    <option value="name_desc">Name: Z → A</option>
-                </select>
+                <div class="flex items-center gap-2">
+                    @php $activeFilters = (int) filled($categorySlug) + (int) $saleOnly; @endphp
+                    <button type="button" @click="mobileFiltersOpen = true" class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-mochi-text transition hover:border-mochi-accent/35 lg:hidden">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>
+                        Filter
+                        @if ($activeFilters > 0)
+                            <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-mochi-accent px-1 text-[11px] font-bold text-[#0b0f16]">{{ $activeFilters }}</span>
+                        @endif
+                    </button>
+
+                    <label for="shop-sort" class="sr-only">Sortierung</label>
+                    <select id="shop-sort" wire:model.live="sortBy"
+                            class="min-h-11 flex-1 rounded-xl border border-white/10 bg-white/5 py-2 pl-3 pr-8 text-sm text-white focus:border-mochi-accent/35 focus:outline-none focus:ring-2 focus:ring-mochi-accent/25 lg:flex-none">
+                        <option value="newest">Neueste zuerst</option>
+                        <option value="price_asc">Preis aufsteigend</option>
+                        <option value="price_desc">Preis absteigend</option>
+                        <option value="name_asc">Name A–Z</option>
+                        <option value="name_desc">Name Z–A</option>
+                    </select>
+                </div>
             </div>
-
-            <label class="mb-6 flex cursor-pointer items-center gap-2 lg:hidden">
-                <input type="checkbox" wire:model.live="saleOnly" class="h-4 w-4 rounded border-white/20 text-mochi-accent focus:ring-mochi-accent/40">
-                <span class="text-sm font-medium text-mochi-text">Nur Sale</span>
-            </label>
 
             <!-- Product Grid -->
             <div wire:loading.flex wire:target="search,categorySlug,sortBy,saleOnly,clearFilters" class="mb-6 items-center gap-2 rounded-xl border border-mochi-accent/25 bg-mochi-accent/10 px-3 py-2 text-sm text-mochi-accent-strong">
@@ -156,92 +160,95 @@
             @elseif($this->products->count() > 0)
                 {{-- Kein zweites Skeleton-Grid: wire:loading + wire:loading.remove überlappt bei Navigate/Hydration → leere „Geisterkarten“ über den echten Produkten. --}}
                 <div
-                    class="grid grid-cols-2 gap-4 transition-opacity duration-200 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                    class="grid grid-cols-2 gap-3 transition-opacity duration-200 sm:gap-5 md:grid-cols-3 xl:grid-cols-4"
                     wire:loading.class="pointer-events-none opacity-40"
                     wire:target="search,categorySlug,sortBy,saleOnly,clearFilters"
                 >
                     @foreach($this->products as $product)
                         @php
-                            $neon = $product->storefrontNeonAccent();
+                            $inStock = (int) $product->stock > 0;
+                            $needsChoice = $product->has_variants && ($product->variants_count ?? 0) > 0;
+                            $gridImg = $product->safeImageUrl();
                         @endphp
                         <article
                             wire:key="product-{{ $product->id }}"
-                            class="mochi-collectible-card group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] shadow-none backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-28px_rgba(0,0,0,0.85)]"
-                            style="border-color: {{ $neon['border'] }}66; box-shadow: {{ $neon['shadow'] }};"
+                            class="mochi-collectible-card group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition duration-300 hover:border-mochi-accent/45"
                         >
-                            <div class="relative p-2 pb-0">
-                                <a
-                                    href="{{ url('/product/'.$product->slug) }}"
-                                    wire:navigate.hover
-                                    class="relative block aspect-square overflow-hidden rounded-2xl bg-mochi-surface-2"
-                                >
-                                    @if($product->is_on_sale)
-                                        <span
-                                            class="absolute left-3 top-3 z-10 rounded-full bg-rose-500/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white ring-1 ring-white/20"
-                                        >
-                                            Sale
-                                        </span>
-                                    @endif
-                                    @if($gridImg = $product->safeImageUrl())
-                                        <img
-                                            src="{{ $gridImg }}"
-                                            alt="{{ $product->name }}"
-                                            class="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.04]"
-                                            loading="lazy"
-                                            decoding="async"
-                                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                                            width="600"
-                                            height="600"
-                                        >
-                                    @else
-                                        <div class="flex h-full w-full items-center justify-center text-xs font-semibold text-mochi-muted">
-                                            {{ $product->category?->name ?? 'Mochi' }}
-                                        </div>
-                                    @endif
-                                </a>
-                            </div>
+                            <a
+                                href="{{ url('/product/'.$product->slug) }}"
+                                wire:navigate.hover
+                                class="relative block aspect-square overflow-hidden bg-mochi-surface-2"
+                                x-data="{ failed: {{ $gridImg ? 'false' : 'true' }} }"
+                            >
+                                @if($product->is_on_sale)
+                                    <span class="absolute left-2 top-2 z-10 rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white">Sale</span>
+                                @endif
+                                @if($gridImg)
+                                    <img
+                                        x-show="!failed"
+                                        x-on:error="failed = true"
+                                        src="{{ $gridImg }}"
+                                        alt="{{ $product->name }}"
+                                        class="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="600"
+                                        height="600"
+                                    >
+                                @endif
+                                {{-- Kein Bild oder Bild nicht ladbar: ruhiger Platzhalter statt Alt-Text im Kartenformat --}}
+                                <div x-show="failed" @if($gridImg) x-cloak @endif class="flex h-full w-full flex-col items-center justify-center gap-2 text-mochi-muted">
+                                    <svg class="h-9 w-9 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2" /><path stroke-linecap="round" d="M9.5 8h5M9.5 11h3" /></svg>
+                                    <span class="text-[11px]">Bild folgt</span>
+                                </div>
+                            </a>
 
-                            <div class="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-2">
+                            <div class="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
                                 @if($product->category)
-                                    <p class="line-clamp-1 text-[10px] font-semibold uppercase tracking-wide text-mochi-muted">
-                                        {{ $product->category->name }}
-                                    </p>
+                                    <p class="line-clamp-1 text-[11px] text-mochi-muted">{{ $product->category->name }}</p>
                                 @endif
 
-                                <h3 class="mt-1 min-h-[2.5rem] text-sm font-bold leading-snug text-white">
-                                    <a
-                                        href="{{ url('/product/'.$product->slug) }}"
-                                        wire:navigate.hover
-                                        class="line-clamp-2 transition hover:text-mochi-accent"
-                                    >
+                                <h3 class="mt-0.5 min-h-[2.5rem] text-sm font-semibold leading-snug text-white">
+                                    <a href="{{ url('/product/'.$product->slug) }}" wire:navigate.hover class="line-clamp-2 transition hover:text-mochi-accent">
                                         {{ $product->name }}
                                     </a>
                                 </h3>
 
-                                @if($product->has_variants && ($product->variants_count ?? 0) > 0)
-                                    <p class="mt-1 line-clamp-1 text-[10px] text-mochi-muted">
-                                        {{ $product->variants_count }} Varianten
-                                    </p>
-                                @endif
-
-                                <div class="mt-3 flex flex-wrap items-baseline gap-2">
-                                    <span class="text-lg font-black tabular-nums text-white">
-                                        {{ $this->formatPrice($product->current_price) }}
-                                    </span>
+                                <div class="mt-2 flex flex-wrap items-baseline gap-x-2">
+                                    <span class="text-base font-bold tabular-nums text-white sm:text-lg">{{ $this->formatPrice($product->current_price) }}</span>
                                     @if($product->is_on_sale)
-                                        <span class="text-xs text-mochi-muted line-through">
-                                            {{ $this->formatPrice($product->price) }}
-                                        </span>
+                                        <span class="text-xs text-mochi-muted line-through">{{ $this->formatPrice($product->price) }}</span>
                                     @endif
                                 </div>
 
-                                <a
-                                    href="{{ url('/product/'.$product->slug) }}"
-                                    wire:navigate.hover
-                                    class="mochi-cta-muted mt-auto !min-h-10 !px-4 !py-2 !text-xs"
-                                >
-                                    Details
-                                </a>
+                                <p class="mt-1 min-h-4 text-[11px] leading-4">
+                                    @if ($needsChoice)
+                                        <span class="text-mochi-muted">{{ $product->variants_count }} Varianten</span>
+                                    @elseif (! $inStock)
+                                        <span class="text-rose-300">Ausverkauft</span>
+                                    @elseif ((int) $product->stock <= 3)
+                                        <span class="text-amber-300">Nur noch {{ (int) $product->stock }} da</span>
+                                    @else
+                                        <span class="text-emerald-300">Auf Lager</span>
+                                    @endif
+                                </p>
+
+                                <div class="mt-auto pt-3">
+                                    @if ($needsChoice)
+                                        <a href="{{ url('/product/'.$product->slug) }}" wire:navigate.hover class="shop-card-btn shop-card-btn--ghost">Variante wählen</a>
+                                    @elseif ($inStock)
+                                        <button type="button"
+                                                wire:click="addToCart({{ (int) $product->id }})"
+                                                wire:loading.attr="disabled"
+                                                wire:target="addToCart({{ (int) $product->id }})"
+                                                class="shop-card-btn">
+                                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14M5 12h14" /></svg>
+                                            <span>In den Warenkorb</span>
+                                        </button>
+                                    @else
+                                        <a href="{{ url('/product/'.$product->slug) }}" wire:navigate.hover class="shop-card-btn shop-card-btn--ghost">Ansehen</a>
+                                    @endif
+                                </div>
                             </div>
                         </article>
                     @endforeach
@@ -310,6 +317,9 @@
                 <input type="checkbox" wire:model.live="saleOnly" class="h-5 w-5 shrink-0 rounded border-white/20 bg-[#040712] text-mochi-accent focus:ring-mochi-accent/40">
                 Nur Sale
             </label>
+            @if($categorySlug || $saleOnly)
+                <button type="button" wire:click="clearFilters" @click="mobileFiltersOpen = false" class="flex min-h-11 w-full items-center justify-center rounded-xl border border-white/15 px-4 text-sm font-medium text-mochi-muted">Filter zurücksetzen</button>
+            @endif
         </div>
     </aside>
 </div>

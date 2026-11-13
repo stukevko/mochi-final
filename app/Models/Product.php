@@ -14,6 +14,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Product extends Model
 {
+    protected static function booted(): void
+    {
+        // Adresse (Slug) automatisch aus dem Namen — niemand muss das von Hand pflegen.
+        static::saving(function (self $model): void {
+            if (filled($model->slug) || blank($model->name)) {
+                return;
+            }
+            $base = \Illuminate\Support\Str::slug((string) $model->name) ?: 'artikel';
+            $slug = $base;
+            for ($i = 2; static::query()->where('slug', $slug)->whereKeyNot($model->getKey() ?? 0)->exists(); $i++) {
+                $slug = $base.'-'.$i;
+            }
+            $model->slug = $slug;
+        });
+    }
+
     protected $fillable = [
         'name',
         'slug',

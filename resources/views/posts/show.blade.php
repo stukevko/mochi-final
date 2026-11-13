@@ -38,7 +38,7 @@
         @endif
 
         <div class="cms-content">
-            {!! $post->body !!}
+            {!! \App\Support\SafeHtml::clean($post->body) !!}
         </div>
     </article>
 @endsection

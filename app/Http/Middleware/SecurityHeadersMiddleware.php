@@ -18,8 +18,11 @@ class SecurityHeadersMiddleware
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set(
             'Permissions-Policy',
-            'camera=(), microphone=(), geolocation=(), payment=()'
+            'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()'
         );
+        $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
+        // Isoliert das Fenster gegen Tab-Nabbing/XS-Leaks; Popups (PayPal/Stripe) laufen als Redirect.
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
         // CSP nur in Produktion: vermeidet Verwechslung mit fehlendem CSS (z. B. veraltetes npm build)
         // und erleichtert lokales Debugging. Andere Security-Header gelten weiter überall.
@@ -44,6 +47,9 @@ class SecurityHeadersMiddleware
                 "base-uri 'self'",
                 "form-action 'self'",
                 "frame-ancestors 'none'",
+                "object-src 'none'",
+                "worker-src 'self' blob:",
+                "manifest-src 'self'",
                 "img-src 'self' data: https: blob:",
                 "font-src 'self' data: https:",
                 'connect-src '.implode(' ', $connectSrc),

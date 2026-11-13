@@ -127,10 +127,40 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        /*
+         | Fachliche Kanäle. Vorher fehlten checkout_stack/payments/shop_errors komplett —
+         | Laravel hat dann bei jedem Aufruf einen "Log [x] is not defined"-Fehler ins
+         | Notfall-Log geschrieben. Alle rotieren täglich (keine endlos wachsenden Dateien).
+         */
         'impel_down' => [
-            'driver' => 'single',
+            'driver' => 'daily',
             'path' => storage_path('logs/Impel_Down_Prisoners.log'),
             'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('LOG_SECURITY_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        'checkout_stack' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/checkout.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('LOG_SHOP_DAYS', 90),
+            'replace_placeholders' => true,
+        ],
+
+        'payments' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payments.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('LOG_SHOP_DAYS', 90),
+            'replace_placeholders' => true,
+        ],
+
+        'shop_errors' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/shop-errors.log'),
+            'level' => 'debug',
+            'days' => (int) env('LOG_SHOP_DAYS', 90),
             'replace_placeholders' => true,
         ],
 

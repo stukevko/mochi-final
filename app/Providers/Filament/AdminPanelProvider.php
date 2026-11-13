@@ -17,6 +17,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
+use Filament\View\PanelsRenderHook;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Table;
@@ -25,7 +26,6 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -42,13 +42,19 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         $primaryHex = '#ff7a1f';
-        if (Schema::hasTable('settings')) {
+        try {
+            // Kein Schema::hasTable() pro Request — Setting::get ist gecacht; vor der Migration greift der Fallback.
             $fromDb = Setting::get('primary_color', $primaryHex);
             $primaryHex = is_string($fromDb) && $fromDb !== '' ? $fromDb : $primaryHex;
-            $primaryHex = str_starts_with($primaryHex, '#') ? $primaryHex : '#'.$primaryHex;
+        } catch (\Throwable) {
+            // DB noch nicht migriert / nicht erreichbar → Standardfarbe.
+        }
+        $primaryHex = str_starts_with($primaryHex, '#') ? $primaryHex : '#'.$primaryHex;
+        if (! preg_match('/^#[0-9a-fA-F]{3,8}$/', $primaryHex)) {
+            $primaryHex = '#ff7a1f';
         }
 
-        $requireTwoFactor = (bool) env('FILAMENT_REQUIRE_2FA', false);
+        $requireTwoFactor = (bool) config('filament.require_2fa', false);
 
         return $panel
             ->default()
@@ -65,6 +71,9 @@ class AdminPanelProvider extends PanelProvider
                 ],
                 isRequired: $requireTwoFactor,
             )
+            // Glocke oben rechts: neue Bestellungen erscheinen von selbst (alle 30 Sekunden geprüft).
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->brandName('Mochi Hub')
             ->font(
                 'Instrument Sans',
@@ -72,6 +81,8 @@ class AdminPanelProvider extends PanelProvider
                 BunnyFontProvider::class,
             )
             ->viteTheme('resources/css/filament/admin/theme.css')
+            // Admin als eigene App installierbar (Handy/Tablet: Vollbild, eigenes Icon).
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => view('filament.partials.app-head')->render())
             ->defaultThemeMode(ThemeMode::Dark)
             ->darkMode(true, true)
             ->sidebarCollapsibleOnDesktop()

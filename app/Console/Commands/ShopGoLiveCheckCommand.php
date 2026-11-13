@@ -121,16 +121,10 @@ class ShopGoLiveCheckCommand extends Command
      */
     private function checkWebhookCsrfExclusion(): array
     {
-        $stripeRoute = Route::getRoutes()->getByName('webhooks.payment.stripe');
-        $paypalRoute = Route::getRoutes()->getByName('webhooks.payment.paypal');
+        $sumupRoute = Route::getRoutes()->getByName('webhooks.payment.sumup');
 
-        if (! $stripeRoute || ! $paypalRoute) {
-            return ['ok' => false, 'detail' => 'Webhook-Routen fehlen'];
-        }
-
-        $urisOk = $stripeRoute->uri() === 'webhooks/payment/stripe' && $paypalRoute->uri() === 'webhooks/payment/paypal';
-        if (! $urisOk) {
-            return ['ok' => false, 'detail' => 'Webhook-URIs stimmen nicht'];
+        if (! $sumupRoute || $sumupRoute->uri() !== 'webhooks/payment/sumup') {
+            return ['ok' => false, 'detail' => 'SumUp-Webhook-Route fehlt'];
         }
 
         $bootstrapPath = base_path('bootstrap/app.php');

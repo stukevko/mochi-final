@@ -44,7 +44,7 @@
 
                 @if (filled($about->about_story))
                     <div class="cms-content mt-10 border-t border-white/10 pt-10">
-                        {!! $about->about_story !!}
+                        {!! \App\Support\SafeHtml::clean($about->about_story) !!}
                     </div>
                 @endif
 
@@ -72,7 +72,7 @@
                         @endif
                         @if (filled($about->about_extra_body))
                             <div class="cms-content mt-4">
-                                {!! $about->about_extra_body !!}
+                                {!! \App\Support\SafeHtml::clean($about->about_extra_body) !!}
                             </div>
                         @endif
                     </section>

@@ -489,7 +489,7 @@ class OrderResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Zahlungsstatus auf „Bezahlt" setzen?')
                     ->action(function ($record) {
-                        $record->update(['payment_status' => 'paid']);
+                        $record->forceFill(['payment_status' => 'paid'])->save();
                         Notification::make()
                             ->success()
                             ->title('Zahlungsstatus aktualisiert')
@@ -527,12 +527,12 @@ class OrderResource extends Resource
                         $carrier = isset($data['shipping_carrier']) ? (string) $data['shipping_carrier'] : null;
                         $customTrackingUrl = isset($data['custom_tracking_url']) ? trim((string) $data['custom_tracking_url']) : '';
 
-                        $record->update([
+                        $record->forceFill([
                             'status' => 'shipped',
                             'tracking_number' => $trackingNumber !== '' ? $trackingNumber : null,
                             'shipping_carrier' => filled($carrier) ? $carrier : null,
                             'custom_tracking_url' => $customTrackingUrl !== '' ? $customTrackingUrl : null,
-                        ]);
+                        ])->save();
                         $to = $record->customerEmail();
                         if ($to !== null && $to !== '') {
                             Mail::to($to)->send(new OrderShipped($record));
@@ -556,6 +556,7 @@ class OrderResource extends Resource
                     ->label('Rechnung herunterladen')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
+                    ->visible(fn (Order $record): bool => $record->isPaid())
                     ->url(fn (Order $record): string => route('admin.orders.invoice', $record)),
 
                 Actions\ViewAction::make(),
@@ -566,14 +567,14 @@ class OrderResource extends Resource
                     Actions\BulkAction::make('mark_shipped')
                         ->label('Als versendet markieren')
                         ->icon('heroicon-o-truck')
-                        ->action(fn ($records) => $records->each->update(['status' => 'shipped']))
+                        ->action(fn ($records) => $records->each(fn (Order $order) => $order->forceFill(['status' => 'shipped'])->save()))
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
 
                     Actions\BulkAction::make('mark_delivered')
                         ->label('Als zugestellt markieren')
                         ->icon('heroicon-o-check-circle')
-                        ->action(fn ($records) => $records->each->update(['status' => 'delivered']))
+                        ->action(fn ($records) => $records->each(fn (Order $order) => $order->forceFill(['status' => 'delivered'])->save()))
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
                 ]),

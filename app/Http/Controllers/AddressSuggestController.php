@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -27,8 +28,19 @@ class AddressSuggestController extends Controller
             $q = $city.' '.$q;
         }
 
+        // Gleiche Eingaben (z. B. "67346") kommen ständig — 7 Tage cachen: schneller für Kunden,
+        // fair gegenüber der freien Photon-API.
+        $cacheKey = 'address-suggest.v1.'.hash('xxh128', $type.'|'.mb_strtolower($q));
+
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached)) {
+            return response()->json(['suggestions' => $cached])
+                ->header('Cache-Control', 'private, max-age=3600');
+        }
+
         try {
             $response = Http::timeout(6)
+                ->connectTimeout(3)
                 ->withHeaders([
                     'User-Agent' => config('app.name').' (address-suggest; '.parse_url((string) config('app.url'), PHP_URL_HOST).')',
                 ])
@@ -93,6 +105,10 @@ class AddressSuggestController extends Controller
             }
         }
 
-        return response()->json(['suggestions' => array_values(array_slice($uniq, 0, 8))]);
+        $result = array_values(array_slice($uniq, 0, 8));
+        Cache::put($cacheKey, $result, now()->addDays(7));
+
+        return response()->json(['suggestions' => $result])
+            ->header('Cache-Control', 'private, max-age=3600');
     }
 }

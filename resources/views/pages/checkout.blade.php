@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Checkout · '.$siteName)
+@section('title', 'Kasse · '.$siteName)
 
 @section('content')
     <livewire:shop.checkout-page />

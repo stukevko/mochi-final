@@ -1,58 +1,125 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Mochi Cards – CMS & Shop
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ein System für alles: Online-Shop (Zahlung über SumUp), Events mit Kalender, News/Journal,
+CMS-Seiten und Rechtstexte – verwaltet im **Mochi Hub** (Admin unter `/admin`).
 
-## About Laravel
+Shop und Admin sind als **App installierbar** (Handy, Tablet, Desktop): eigenes Icon, Vollbild ohne
+Browserleiste, Tab-Leiste unten, Offline-Seite bei Funkloch.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Stack | Version |
+| --- | --- |
+| PHP | 8.3 · 8.4 · 8.5 |
+| Laravel | 13.x (≥ 13.29) |
+| Filament / Livewire | 5.x / 4.x |
+| Datenbank | SQLite (Standard), MySQL/MariaDB oder PostgreSQL |
+| Frontend | Vite 8, Tailwind CSS 4 |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Installation
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Variante A – Docker (jede Maschine: Linux, macOS, Windows)
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env
+docker compose run --rm app php artisan key:generate --show   # Ausgabe als APP_KEY in .env eintragen
+docker compose up -d --build
+docker compose exec app php artisan shop:ensure-admin
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Shop: <http://localhost:8080> · Admin: <http://localhost:8080/admin>
+Läuft mit Web-Server, Queue-Worker und Scheduler (Backups). Daten liegen in Docker-Volumes.
 
-## Contributing
+### Variante B – Lokal mit PHP & Node
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Voraussetzungen: PHP ≥ 8.3 (Extensions: `intl`, `gd`, `pdo_sqlite`, `mbstring`, `zip`), Composer 2, Node ≥ 20.
 
-## Code of Conduct
+```bash
+composer run setup        # installiert alles, legt .env + SQLite an, migriert, baut Assets
+php artisan shop:ensure-admin
+composer run dev          # Server :8008 + Queue + Vite
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Variante 0 – Normaler Webspace (am einfachsten, ohne SSH)
 
-## Security Vulnerabilities
+1. Das fertige **Webspace-Paket** herunterladen: GitHub → *Releases* → `mochi-cards-webspace.zip`.
+2. Entpacken und alles per FTP in den Domain-Ordner hochladen (inkl. `.htaccess`).
+3. Domain im Browser öffnen — der **Einrichtungs-Assistent** fragt Shop-Name, Admin-Zugang, SumUp und
+   E-Mail-Postfach ab und richtet alles ein (Datenbank inklusive).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Voraussetzung: PHP ≥ 8.3 und Apache mit `mod_rewrite` (Standard bei fast allen Hostern).
+Es wird **kein Cronjob** gebraucht: Zahlungs- und Kassenabgleich laufen automatisch mit.
+Updates: neues Paket drüberkopieren, Seite einmal öffnen — fertig. Details: `deploy/LIESMICH-WEBSPACE.txt`.
 
-## License
+### Variante C – Server (nginx/PHP-FPM oder Apache/Shared Hosting)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer run deploy       # composer --no-dev, migrate, storage:link, optimize, queue:restart
+npm ci && npm run build
+```
+
+* **nginx:** Vorlage in `deploy/nginx/mochi-cards.de.conf` (Gzip, Upload-Sandbox, Service-Worker-Header).
+  PHP-Socket an die installierte Version anpassen.
+* **Apache/Shared Hosting:** `public/.htaccess` und `storage/app/public/.htaccess` sind vorbereitet.
+  Document-Root muss auf `public/` zeigen.
+* Cron: `* * * * * php /pfad/artisan schedule:run` · Queue: `php artisan queue:work` (z. B. per Supervisor).
+
+### Production-Checkliste (`.env`)
+
+```dotenv
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://deine-domain.de
+SESSION_SECURE_COOKIE=true
+FILAMENT_REQUIRE_2FA=true        # Passkey-Pflicht im Admin
+TRUSTED_PROXIES=*                # hinter nginx/CDN; ohne Proxy: 127.0.0.1
+LOG_LEVEL=warning
+```
+
+Danach `php artisan shop:go-live-check`.
+
+---
+
+## Verkauf & Rechnungen
+
+Bezahlt wird ausschließlich über **SumUp** (`SUMUP_TOKEN`, `SUMUP_MERCHANT_CODE` in `.env`).
+
+1. Kunde bestellt → Ware wird **30 Minuten reserviert**, Weiterleitung zur SumUp-Bezahlseite.
+2. Zahlung wird dreifach abgesichert erkannt: Rückkehr des Kunden, SumUp-Webhook
+   (`POST /webhooks/payment/sumup`) und der Abgleich `shop:reconcile-payments` (alle 5 Minuten).
+   Der Status wird immer direkt bei SumUp nachgefragt — gefälschte Meldungen bewirken nichts.
+3. Bei Zahlungseingang: fortlaufende Rechnungsnummer (`RE-2026-00001`), Bestätigungs-Mail mit
+   PDF-Rechnung an den Kunden, Benachrichtigung an den Laden.
+4. Nicht bezahlt → Bestellung verfällt, Ware geht automatisch zurück in den Bestand.
+   Storno im Admin bucht die Ware ebenfalls zurück.
+
+**Wichtig:** Der Cron/Scheduler muss laufen (siehe oben), sonst werden abgebrochene Bestellungen
+nicht freigegeben. Im Admin unter *Global Settings → Buchhaltung*: Steuernummer oder USt-IdNr.,
+Rechnungs-Präfix, MwSt.-Satz und Versandkosten pflegen.
+
+## Laden & Shop als eine Einheit (SumUp)
+
+Im Admin unter **Management → Kasse & Shop (SumUp)**:
+
+* **Artikel:** In SumUp anlegen und pflegen, dann die Artikelliste als CSV exportieren und hochladen —
+  Name, Preis und Artikelnummer werden übernommen. (SumUp bietet für den Artikelkatalog keine
+  öffentliche Schnittstelle, deshalb der Export.)
+* **Bestand:** Verkäufe an der SumUp-Kasse werden alle 5 Minuten über die SumUp Sales API gelesen und
+  vom Shop-Bestand abgezogen (`shop:sumup-sync-sales`). Zuordnung über die **Artikelnummer (SKU)**.
+  Unbekannte Artikel landen als Entwurf im Shop.
+* **Grenze:** Der Shop kann den Bestand *in SumUp* nicht ändern. Maßgeblich ist der Bestand im Shop.
+
+Der SumUp-API-Schlüssel braucht die Berechtigung `sales.read`.
+
+## Updates & Sicherheit
+
+```bash
+composer update && npm update     # Abhängigkeiten aktualisieren
+composer run security             # composer audit + npm audit
+php artisan test
+```
+
+`composer.json` blockiert Pakete mit bekannten Sicherheitslücken (`audit.block-insecure`).
+GitHub Actions (`.github/workflows/ci.yml`) testet jeden Push gegen PHP 8.3, 8.4 und 8.5.
+
+Weitere Doku: `README_ADMIN.md` (Technik/Betrieb) · `README_ADMIN_KUNDE.md` (Bedienung des Admins).

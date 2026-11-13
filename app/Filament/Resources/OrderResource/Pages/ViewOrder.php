@@ -25,7 +25,7 @@ class ViewOrder extends ViewRecord
                 ->visible(fn (): bool => $this->getRecord()->payment_status === 'pending')
                 ->requiresConfirmation()
                 ->action(function (): void {
-                    $this->getRecord()->update(['payment_status' => 'paid']);
+                    $this->getRecord()->forceFill(['payment_status' => 'paid'])->save();
                     Notification::make()->success()->title('Zahlungsstatus aktualisiert')->send();
                 }),
 
@@ -58,12 +58,12 @@ class ViewOrder extends ViewRecord
                     $trackingNumber = isset($data['tracking_number']) ? trim((string) $data['tracking_number']) : '';
                     $carrier = isset($data['shipping_carrier']) ? (string) $data['shipping_carrier'] : null;
                     $customTrackingUrl = isset($data['custom_tracking_url']) ? trim((string) $data['custom_tracking_url']) : '';
-                    $record->update([
+                    $record->forceFill([
                         'status' => 'shipped',
                         'tracking_number' => $trackingNumber !== '' ? $trackingNumber : null,
                         'shipping_carrier' => filled($carrier) ? $carrier : null,
                         'custom_tracking_url' => $customTrackingUrl !== '' ? $customTrackingUrl : null,
-                    ]);
+                    ])->save();
                     $to = $record->customerEmail();
                     if ($to !== null && $to !== '') {
                         Mail::to($to)->send(new OrderShipped($record));
@@ -83,6 +83,7 @@ class ViewOrder extends ViewRecord
             Actions\Action::make('download_invoice')
                 ->label('Rechnung herunterladen')
                 ->icon('heroicon-o-document-arrow-down')
+                ->visible(fn (): bool => $this->getRecord()->isPaid())
                 ->url(fn (): string => route('admin.orders.invoice', $this->getRecord())),
 
             Actions\EditAction::make(),

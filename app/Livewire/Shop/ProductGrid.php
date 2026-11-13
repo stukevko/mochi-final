@@ -77,7 +77,7 @@ class ProductGrid extends Component
             $ids = array_values(array_filter($cached['ids'], fn ($id): bool => is_int($id) || ctype_digit((string) $id)));
 
             if ($ids === []) {
-                return Category::newCollection();
+                return (new Category)->newCollection();
             }
 
             return Category::query()
@@ -249,6 +249,37 @@ class ProductGrid extends Component
     /**
      * Clear all filters
      */
+    /**
+     * Direktkauf aus der Übersicht (nur Artikel ohne Varianten; sonst führt die Karte zur Produktseite).
+     */
+    public function addToCart(int $productId): void
+    {
+        $product = \App\Models\Product::query()
+            ->where('is_active', true)
+            ->withCount('variants')
+            ->find($productId);
+
+        if (! $product || ($product->has_variants && $product->variants_count > 0)) {
+            return;
+        }
+
+        $cart = app(\App\Services\CartService::class);
+        $inCart = (int) collect($cart->getRawLines())
+            ->filter(fn (array $line): bool => (int) ($line['product_id'] ?? 0) === $productId)
+            ->sum(fn (array $line): int => (int) ($line['quantity'] ?? 0));
+
+        if ((int) $product->stock < 1 || $inCart >= (int) $product->stock) {
+            $this->dispatch('shop-toast', message: 'Mehr ist davon gerade nicht auf Lager.', type: 'error');
+
+            return;
+        }
+
+        $cart->add($productId, null, 1);
+
+        $this->dispatch('cartUpdated');
+        $this->dispatch('shop-toast', message: 'In den Warenkorb gelegt.', type: 'success');
+    }
+
     public function clearFilters(): void
     {
         $this->categorySlug = null;

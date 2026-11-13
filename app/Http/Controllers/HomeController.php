@@ -68,6 +68,7 @@ class HomeController extends Controller
             'upcomingEvents' => $upcomingEvents,
             'latestPosts' => $latestPosts,
             'heroLogoUrl' => $heroLogoUrl,
+            'hasOwnHeroLogo' => filled($settings->hero_logo_path),
             'heroBackgroundUrl' => $heroBackgroundUrl,
             'heroHeadline' => $heroHeadline,
             'heroVisitStoreUrl' => $heroVisitStoreUrl,
@@ -116,7 +117,33 @@ class HomeController extends Controller
             ];
         }
 
-        if ($url === '') {
+        $ownImageUrl = $this->resolveFeaturedImageUrlFromPath($settings->featured_product_image_path);
+        $hasOwnCard = $ownImageUrl !== null || trim((string) $settings->featured_product_title) !== '';
+
+        // Nichts eingestellt → automatisch ein echtes Produkt zeigen (hervorgehoben, sonst das neueste).
+        if ($url === '' && ! $hasOwnCard) {
+            $auto = Product::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_featured')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($auto !== null) {
+                $autoImage = $auto->safeImageUrl(0);
+
+                return [
+                    'id' => null,
+                    'title' => $auto->name,
+                    'description' => trim(strip_tags((string) ($auto->short_description ?? ''))) ?: $defaultDescription,
+                    'price' => MoneyFormatter::format((float) $auto->current_price),
+                    'url' => route('product.show', ['slug' => $auto->slug], false),
+                    'image_url' => $autoImage,
+                    'is_placeholder' => false,
+                    'show_community_token_art' => $autoImage === null,
+                    'internal_shop_product' => true,
+                ];
+            }
+
             return [
                 'id' => null,
                 'title' => $defaultTitle,
@@ -127,6 +154,11 @@ class HomeController extends Controller
                 'is_placeholder' => true,
                 'show_community_token_art' => true,
             ];
+        }
+
+        // Eigene Karte ohne Link → Button führt in den Shop.
+        if ($url === '') {
+            $url = $shopBaseUrl;
         }
 
         $title = trim((string) $settings->featured_product_title) ?: $defaultTitle;

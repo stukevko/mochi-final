@@ -33,7 +33,7 @@ class ManageBrandingDesign extends Page
 
     protected static string | UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
-    protected static ?string $navigationLabel = 'Branding & Design';
+    protected static ?string $navigationLabel = 'Logo & Farben';
 
     protected static ?int $navigationSort = 120;
 
@@ -104,7 +104,7 @@ class ManageBrandingDesign extends Page
                             ->directory('settings')
                             ->disk('public')
                             ->visibility('public')
-                            ->helperText('Empfohlen: PNG mit transparentem Hintergrund, max. ca. 800 px Breite. Bis das finale Logo vorliegt, wird automatisch public/images/mochi-logo-placeholder.png angezeigt.'),
+                            ->helperText('Empfohlen: PNG mit transparentem Hintergrund, max. ca. 800 px Breite. Ohne Upload wird das mitgelieferte Mochi-Cards-Logo angezeigt. Ein eigenes Logo erscheint auch auf der Rechnung (weißer Hintergrund) — also bitte keine rein weiße Schrift.'),
                         Forms\Components\FileUpload::make('favicon_path')
                             ->label('Favicon')
                             ->image()

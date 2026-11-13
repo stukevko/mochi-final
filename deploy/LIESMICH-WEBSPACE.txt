@@ -1,0 +1,40 @@
+MOCHI CARDS – INSTALLATION AUF NORMALEM WEBSPACE
+================================================
+
+Du brauchst: Webspace mit PHP 8.3 oder neuer und eine Domain (oder Subdomain).
+Kein SSH, kein Cronjob, keine Kommandozeile, keine Datenbank anlegen.
+
+INSTALLIEREN (ca. 5 Minuten) – DER EINFACHE WEG
+-----------------------------------------------
+1. Zwei Dateien in den Ordner der Domain hochladen (Dateimanager des Hosters oder FTP):
+      mochi-setup.php
+      mochi-cards-webspace.zip      (NICHT entpacken!)
+2. Im Browser öffnen:  https://mein-shop.de/mochi-setup.php
+   -> Der Shop entpackt sich selbst auf dem Server.
+3. Auf "Shop einrichten" klicken, Shop-Name, E-Mail und Passwort eingeben. Fertig.
+
+Danach: https://mein-shop.de/admin öffnen und anmelden. Auf der Startseite des Admin-Bereichs
+steht die Liste "Erste Schritte" – einfach von oben nach unten abarbeiten.
+
+UPDATE EINSPIELEN
+-----------------
+Genau wie oben: die neue "mochi-cards-webspace.zip" und "mochi-setup.php" hochladen und
+https://mein-shop.de/mochi-setup.php öffnen. Deine Daten (Produkte, Bestellungen, Bilder,
+Einstellungen) bleiben erhalten, die Datenbank aktualisiert sich von selbst.
+
+ALTERNATIVE OHNE HELFER
+-----------------------
+ZIP am Computer entpacken und ALLE Dateien per FTP hochladen (auch die versteckte Datei
+".htaccess"), dann die Domain im Browser öffnen. Bei Updates vorhandene Dateien überschreiben.
+
+WENN ETWAS NICHT KLAPPT
+-----------------------
+- Der Helfer und der Assistent sagen genau, was fehlt (z. B. PHP-Version, Schreibrechte).
+- "Seite nicht gefunden" bei allen Unterseiten: Der Hoster hat "mod_rewrite" nicht aktiv
+  -> Support des Hosters fragen.
+- Der Shop muss direkt unter einer Domain oder Subdomain liegen (nicht in einem Unterordner
+  wie mein-shop.de/shop).
+
+DATENSICHERUNG
+--------------
+Regelmäßig per FTP sichern: die Datei ".env" sowie die Ordner "database" und "storage".

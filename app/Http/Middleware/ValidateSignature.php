@@ -12,9 +12,6 @@ class ValidateSignature extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'session_id',
-        'token',
-        'PayerID',
         'checkout_id',
     ];
 }

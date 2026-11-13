@@ -32,7 +32,7 @@ class ManageSystemServices extends Page
 
     protected static string | UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
-    protected static ?string $navigationLabel = 'System & Zahlung';
+    protected static ?string $navigationLabel = 'Wartungsmodus';
 
     protected static ?int $navigationSort = 140;
 
@@ -43,7 +43,7 @@ class ManageSystemServices extends Page
 
     public function getTitle(): string
     {
-        return 'System & Zahlung';
+        return 'Wartungsmodus';
     }
 
     protected function fillForm(): void
@@ -87,10 +87,12 @@ class ManageSystemServices extends Page
                     ->schema([
                         Forms\Components\Placeholder::make('mail_hint')
                             ->label('Hinweis')
-                            ->content('Der Versand von System-E-Mails (Bestellungen, Passwort) wird auf dem Server per .env konfiguriert (MAIL_MAILER, MAIL_HOST, …). Bei Problemen wenden Sie sich an Ihre Hosting-Firma oder Agentur.'),
+                            ->content('Das E-Mail-Postfach für Bestellbestätigungen und Rechnungen trägst du unter „Zugangsdaten & Technik“ ein. Dort kannst du auch eine Test-Mail verschicken.'),
                     ]),
 
+                // Verkauf läuft ausschließlich über SumUp — Vorkasse ist im Checkout abgeschaltet.
                 Section::make('Vorkasse / Überweisung')
+                    ->visible(false)
                     ->schema([
                         Forms\Components\Toggle::make('prepayment_enabled')
                             ->label('Vorkasse im Checkout anbieten')

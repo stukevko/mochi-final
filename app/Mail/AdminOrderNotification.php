@@ -5,13 +5,12 @@ namespace App\Mail;
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class AdminOrderNotification extends Mailable implements ShouldQueue
+class AdminOrderNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -32,7 +31,7 @@ class AdminOrderNotification extends Mailable implements ShouldQueue
         return new Content(
             markdown: 'emails.orders.admin-notification',
             with: [
-                'adminUrl' => OrderResource::getUrl('edit', ['record' => $this->order]),
+                'adminUrl' => OrderResource::getUrl('view', ['record' => $this->order]),
             ],
         );
     }

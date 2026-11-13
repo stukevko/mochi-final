@@ -15,6 +15,15 @@ class SumUpCheckoutRedirectTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Die Tests vergleichen signierte Links mit Ablaufzeit. Ohne eingefrorene Uhr
+        // schlagen sie sporadisch fehl, wenn zwischen Anfrage und Vergleich die Sekunde wechselt.
+        $this->freezeTime();
+    }
+
     public function test_sumup_checkout_includes_redirect_url_for_hosted_checkout(): void
     {
         config([
@@ -43,7 +52,12 @@ class SumUpCheckoutRedirectTest extends TestCase
             $payload = $request->data();
             $returnUrl = $payload['redirect_url'] ?? null;
 
-            if (! is_string($returnUrl) || ($payload['return_url'] ?? null) !== $returnUrl) {
+            // return_url = Server-zu-Server-Webhook, redirect_url = Rückkehr des Kunden.
+            if (! is_string($returnUrl) || ($payload['return_url'] ?? null) !== route('webhooks.payment.sumup')) {
+                return false;
+            }
+
+            if (empty($payload['valid_until'])) {
                 return false;
             }
 

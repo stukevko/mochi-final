@@ -3,7 +3,6 @@
 @section('title', $siteName.' · Hub')
 
 @push('promo')
-    @include('partials.event-ticker', ['nextEvent' => $nextEvent])
 @endpush
 
 @section('content')
@@ -15,25 +14,33 @@
             class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(255,122,31,0.08),transparent_55%)]"
         ></div>
         <div class="relative">
-            <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-14 xl:gap-20">
+            <div class="mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-20 lg:py-24">
+                <div class="grid items-center gap-9 lg:grid-cols-2 lg:gap-14 xl:gap-20">
                     <div class="flex flex-col lg:pr-2">
-                        <img
-                            src="{{ $heroLogoUrl }}"
-                            alt="{{ $siteName }}"
-                            class="mb-8 h-12 w-auto max-w-[14rem] object-contain opacity-95 sm:mb-10 sm:h-14"
-                        >
+                        {{-- Nur ein eigens hochgeladenes Hero-Logo zeigen — das Standard-Logo steht bereits im Kopf direkt darüber. --}}
+                        @if ($hasOwnHeroLogo ?? false)
+                            <img
+                                src="{{ $heroLogoUrl }}"
+                                alt=""
+                                class="mb-8 hidden h-12 w-auto max-w-[14rem] object-contain opacity-95 sm:mb-10 sm:h-14 md:block"
+                            >
+                        @endif
                         <h1 class="font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[2.65rem] xl:text-6xl">
                             {{ $heroHeadline }}
                         </h1>
-                        <a
-                            href="{{ $heroVisitStoreUrl }}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="mochi-cta mochi-cta-pulse mt-10 w-fit !px-8 !py-3.5 !text-sm font-extrabold sm:!text-base"
-                        >
-                            Besuch uns im Laden
-                        </a>
+                        <div class="mt-8 flex flex-wrap gap-3 sm:mt-10">
+                            <a href="{{ route('shop') }}" class="mochi-cta !px-7 !py-3.5 !text-sm font-extrabold sm:!text-base">
+                                Zum Shop
+                            </a>
+                            <a
+                                href="{{ $heroVisitStoreUrl }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex min-h-12 items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition hover:border-mochi-accent/50 hover:bg-white/5 sm:text-base"
+                            >
+                                Besuch uns im Laden
+                            </a>
+                        </div>
                     </div>
 
                     <div class="relative mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none">
@@ -46,19 +53,7 @@
                         <div
                             class="mochi-hero-shop-card relative z-10 overflow-hidden rounded-3xl border border-white/20 bg-white/[0.08] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_32px_80px_-36px_rgba(255,122,31,0.38),0_28px_72px_-32px_rgba(0,0,0,0.92)] backdrop-blur-2xl sm:p-8"
                         >
-                            @if (! empty($featuredProduct['is_placeholder']))
-                                <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-mochi-muted/90">
-                                    Shop-Highlight
-                                </p>
-                            @elseif (! empty($featuredProduct['id']))
-                                <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-mochi-muted/90">
-                                    ID {{ $featuredProduct['id'] }}
-                                </p>
-                            @else
-                                <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-mochi-muted/90">
-                                    Shop-Highlight
-                                </p>
-                            @endif
+                            <p class="text-xs font-semibold text-mochi-accent">Shop-Highlight</p>
                             <div class="relative mx-auto mt-4 flex min-h-[16rem] items-center justify-center sm:min-h-[18rem]">
                                 <div
                                     class="pointer-events-none absolute left-1/2 top-1/2 h-[min(92%,20rem)] w-[min(92%,20rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,180,90,0.5)_0%,rgba(255,122,31,0.28)_38%,transparent_70%)] blur-3xl"

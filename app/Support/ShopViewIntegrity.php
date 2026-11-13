@@ -24,7 +24,6 @@ final class ShopViewIntegrity
         return [
             'home',
             'layouts.app',
-            'components.layouts.app',
             'sitemap',
             'pages.shop',
             'pages.cart',

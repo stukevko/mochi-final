@@ -16,6 +16,9 @@ class PaymentSettingsCheck extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-server-stack';
 
+    /** Aus dem Menü genommen: für den Laden-Alltag nicht nötig (Seite bleibt per Adresse erreichbar). */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string | UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
     protected static ?string $navigationLabel = 'Server-Keys (.env-Hilfe)';

@@ -14,7 +14,7 @@ class SmartPulseStatsWidget extends StatsOverviewWidget
 {
     protected static ?int $sort = -100;
 
-    protected ?string $heading = 'Live-Pulse';
+    protected ?string $heading = 'Heute im Überblick';
 
     protected ?string $description = 'Die wichtigsten Shop- und Kalenderzahlen für heute.';
 
@@ -42,7 +42,7 @@ class SmartPulseStatsWidget extends StatsOverviewWidget
                 ->description('Bezahlte Bestellungen heute')
                 ->icon(Heroicon::OutlinedBanknotes),
             Stat::make('Offene Bestellungen', (string) $openOrders)
-                ->description('Pending + Processing')
+                ->description('Offen und in Bearbeitung')
                 ->icon(Heroicon::OutlinedArchiveBox),
             Stat::make('Anstehende Events (7 Tage)', (string) $upcomingEvents)
                 ->description('Aktive Termine der nächsten Woche')

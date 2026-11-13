@@ -8,7 +8,11 @@ use Illuminate\Support\Facades\Storage;
 
 class ShopBranding
 {
-    public const LOGO_PLACEHOLDER = 'images/mochi-logo-placeholder.png';
+    /** Standard-Logo (helle Schrift, für die dunkle Seite). */
+    public const LOGO_PLACEHOLDER = 'images/logo.svg';
+
+    /** Standard-Logo für helle Flächen (Rechnung/PDF) — PNG, weil DomPDF SVG-Verläufe nicht zuverlässig darstellt. */
+    public const LOGO_ON_LIGHT = 'images/logo-on-light.png';
 
     public static function displayName(): string
     {
@@ -59,7 +63,7 @@ class ShopBranding
             }
         }
 
-        $placeholder = public_path(self::LOGO_PLACEHOLDER);
+        $placeholder = public_path(self::LOGO_ON_LIGHT);
 
         return is_file($placeholder) ? $placeholder : null;
     }

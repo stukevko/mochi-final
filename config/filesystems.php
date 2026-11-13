@@ -40,7 +40,8 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            // Webspace ohne Symlink-Unterstützung: PUBLIC_DISK_ROOT=public/storage (setzt der Installer automatisch).
+            'root' => env('PUBLIC_DISK_ROOT') ? base_path((string) env('PUBLIC_DISK_ROOT')) : storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,

@@ -2,26 +2,22 @@
 
 namespace App\Livewire\Shop;
 
-use App\Mail\AdminOrderNotification;
-use App\Mail\OrderConfirmed;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\PaymentGateway;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Services\CartService;
 use App\Services\Inventory\StockService;
+use App\Services\Payments\PaymentCompletionService;
 use App\Services\Payments\PaymentProviderService;
 use App\Services\TurnstileVerifier;
 use App\Support\MoneyFormatter;
+use App\Support\ShippingCalculator;
 use App\Support\ShopErrorLogger;
-use Illuminate\Contracts\Mail\Mailable as MailableContract;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Throwable;
@@ -58,16 +54,6 @@ class CheckoutPage extends Component
             $user = Auth::user();
             $this->first_name = (string) ($user->name ?? '');
             $this->email = (string) ($user->email ?? '');
-        }
-
-        $methods = $this->paymentMethods;
-        if ($methods === []) {
-            return;
-        }
-
-        $codes = collect($methods)->pluck('code')->all();
-        if (! in_array($this->payment_method, $codes, true)) {
-            $this->payment_method = (string) ($methods[0]['code'] ?? 'sumup');
         }
     }
 
@@ -107,6 +93,37 @@ class CheckoutPage extends Component
             return null;
         }
 
+        // Vorheriger, nicht abgeschlossener Versuch dieses Kunden: erst klären, sonst blockiert
+        // dessen Reservierung den neuen Versuch (z. B. beim letzten Exemplar).
+        $previousId = session('pending_order_id');
+        if ($previousId) {
+            $previous = Order::query()->find($previousId);
+            if ($previous && $previous->payment_method === 'sumup' && $previous->status === 'pending') {
+                try {
+                    $completion = app(PaymentCompletionService::class);
+                    $state = $completion->reconcileSumUp($previous, clearCart: true);
+
+                    if ($state === 'paid') {
+                        session()->forget('pending_order_id');
+                        $this->dispatch('cartUpdated');
+
+                        return redirect()->temporarySignedRoute(
+                            'checkout.success',
+                            now()->addDays(7),
+                            ['orderNumber' => $previous->order_number],
+                        );
+                    }
+
+                    if ($state === 'pending') {
+                        $completion->cancelUnpaid($previous, 'superseded_by_new_attempt');
+                    }
+                } catch (Throwable $e) {
+                    report($e);
+                }
+            }
+            session()->forget('pending_order_id');
+        }
+
         // Preise kommen ausschließlich aus getContent() → Datenbank; keine Request-/Session-Preise vertrauen.
         $cartItems = $cartService->getContent();
         if ($cartItems === []) {
@@ -115,9 +132,9 @@ class CheckoutPage extends Component
             return null;
         }
 
-        $allowedMethods = collect($this->paymentMethods)->pluck('code')->all();
-        if (! in_array($this->payment_method, $allowedMethods, true)) {
-            $this->addError('payment_method', 'Diese Zahlungsart ist derzeit nicht verfügbar.');
+        $this->payment_method = 'sumup';
+        if ($this->paymentMethods === []) {
+            $this->addError('payment_method', 'Online-Zahlung ist noch nicht eingerichtet. Bitte kontaktiere uns.');
 
             return null;
         }
@@ -128,7 +145,6 @@ class CheckoutPage extends Component
                 $taxRate = $this->getTaxRate();
                 $netDivisor = 1 + ($taxRate / 100);
                 $paymentStatus = 'pending';
-                $commitStockNow = ! $this->isOnlinePaymentMethod($this->payment_method);
 
                 $order = new Order;
                 $order->forceFill([
@@ -208,28 +224,31 @@ class CheckoutPage extends Component
                     ]);
                 }
 
-                $netSubtotal = round($grossSubtotal / ($netDivisor > 0 ? $netDivisor : 1), 2);
-                $taxAmount = round($grossSubtotal - $netSubtotal, 2);
+                // Alle Beträge brutto; Netto/MwSt. werden aus der Gesamtsumme (Ware + Versand) herausgerechnet.
+                $shippingCost = ShippingCalculator::costFor($grossSubtotal);
+                $grossTotal = round($grossSubtotal + $shippingCost, 2);
+                $netTotal = round($grossTotal / ($netDivisor > 0 ? $netDivisor : 1), 2);
 
                 $order->forceFill([
-                    'subtotal' => $netSubtotal,
-                    'tax' => $taxAmount,
-                    'total' => round($grossSubtotal, 2),
+                    'subtotal' => $netTotal,
+                    'tax' => round($grossTotal - $netTotal, 2),
+                    'shipping_cost' => $shippingCost,
+                    'total' => $grossTotal,
                 ])->save();
 
-                if ($commitStockNow) {
-                    app(StockService::class)->commitOrderStock($order);
-                }
+                // Ware sofort reservieren (Bestand abziehen). Wird nicht bezahlt, gibt
+                // shop:reconcile-payments sie nach 30 Minuten wieder frei → kein Überverkauf.
+                app(StockService::class)->commitOrderStock($order);
 
                 return $order;
             });
         } catch (Throwable $e) {
             ShopErrorLogger::report('checkout.place_order.failed', $e, [
-                'email' => $this->email,
+                'email' => self::maskEmail($this->email),
                 'ip' => request()->ip(),
             ]);
             Log::channel('checkout_stack')->error('checkout.place_order.failed', [
-                'email' => $this->email,
+                'email' => self::maskEmail($this->email),
                 'ip' => request()->ip(),
                 'message' => $e->getMessage(),
             ]);
@@ -239,34 +258,33 @@ class CheckoutPage extends Component
             return null;
         }
 
-        if ($this->isOnlinePaymentMethod($this->payment_method)) {
+        session(['pending_order_id' => $order->id]);
+
+        try {
+            return redirect()->away(app(PaymentProviderService::class)->createSumUpCheckoutUrl($order));
+        } catch (Throwable $e) {
+            ShopErrorLogger::report('checkout.place_order.payment_provider_failed', $e, [
+                'order_id' => $order->id ?? null,
+                'provider' => 'sumup',
+            ]);
+            Log::channel('checkout_stack')->error('checkout.place_order.payment_provider_failed', [
+                'order_id' => $order->id ?? null,
+                'provider' => 'sumup',
+                'message' => $e->getMessage(),
+            ]);
+            report($e);
+
+            // Bezahlseite nicht erreichbar → Bestellung verwerfen und Ware sofort wieder freigeben.
             try {
-                $providerService = app(PaymentProviderService::class);
-                $checkoutUrl = match ($this->payment_method) {
-                    'paypal' => $providerService->createPayPalCheckoutUrl($order),
-                    'sumup' => $providerService->createSumUpCheckoutUrl($order),
-                    default => $providerService->createStripeCheckoutUrl($order),
-                };
-
-                return redirect()->away($checkoutUrl);
-            } catch (Throwable $e) {
-                ShopErrorLogger::report('checkout.place_order.payment_provider_failed', $e, [
-                    'order_id' => $order->id ?? null,
-                    'provider' => $this->payment_method,
-                ]);
-                Log::channel('checkout_stack')->error('checkout.place_order.payment_provider_failed', [
-                    'order_id' => $order->id ?? null,
-                    'provider' => $this->payment_method,
-                    'message' => $e->getMessage(),
-                ]);
-                report($e);
-                $this->addError('payment_method', 'Zahlung fehlgeschlagen, bitte probiere eine andere Methode.');
-
-                return null;
+                app(PaymentCompletionService::class)->cancelUnpaid($order, 'sumup:checkout_create_failed');
+            } catch (Throwable $cancelError) {
+                report($cancelError);
             }
-        }
 
-        return $this->completeOfflineOrder($order, $cartService);
+            $this->addError('payment_method', 'Die Bezahlseite ist gerade nicht erreichbar. Es wurde nichts abgebucht — bitte versuche es in ein paar Minuten erneut.');
+
+            return null;
+        }
     }
 
     public function getItemsProperty(): array
@@ -274,63 +292,33 @@ class CheckoutPage extends Component
         return app(CartService::class)->getContent();
     }
 
+    public function getGoodsTotalProperty(): float
+    {
+        return (float) app(CartService::class)->getTotal();
+    }
+
+    public function getShippingCostProperty(): float
+    {
+        return ShippingCalculator::costFor($this->goodsTotal);
+    }
+
     public function getTotalProperty(): float
     {
-        return app(CartService::class)->getTotal();
+        return round($this->goodsTotal + $this->shippingCost, 2);
     }
 
+    /**
+     * Verkauf ausschließlich über SumUp (Karte, Apple Pay, Google Pay — je nach SumUp-Konto).
+     *
+     * @return array<int, array{code: string, name: string}>
+     */
     public function getPaymentMethodsProperty(): array
     {
-        $labels = [
-            'sumup' => 'SumUp',
-            'stripe' => 'Stripe Checkout',
-            'card' => 'Kreditkarte (Stripe)',
-            'klarna' => 'Klarna (Stripe)',
-            'paypal' => 'PayPal',
-            'prepayment' => 'Vorkasse / Überweisung',
-            'invoice' => 'Kauf auf Rechnung',
-        ];
-
-        $methods = [];
-
-        foreach (PaymentGateway::query()->active()->orderBy('sort_order')->get(['code', 'name']) as $gateway) {
-            $code = strtolower((string) $gateway->code);
-            if ($code === '' || ! $this->isPaymentMethodConfigured($code)) {
-                continue;
-            }
-
-            $methods[$code] = [
-                'code' => $code,
-                'name' => (string) ($gateway->name ?: ($labels[$code] ?? strtoupper($code))),
-            ];
+        if (! app(PaymentProviderService::class)->isSumUpConfigured()) {
+            return [];
         }
 
-        if ((bool) Setting::get('prepayment_enabled', false)) {
-            $methods['prepayment'] = [
-                'code' => 'prepayment',
-                'name' => 'Vorkasse / Überweisung',
-            ];
-        }
-
-        if (! isset($methods['sumup']) && app(PaymentProviderService::class)->isSumUpConfigured()) {
-            $methods['sumup'] = [
-                'code' => 'sumup',
-                'name' => 'SumUp',
-            ];
-        }
-
-        return array_values($methods);
-    }
-
-    protected function isPaymentMethodConfigured(string $code): bool
-    {
-        return match ($code) {
-            'sumup' => app(PaymentProviderService::class)->isSumUpConfigured(),
-            'stripe', 'card', 'klarna' => filled(config('services.stripe.secret')),
-            'paypal' => filled(config('services.paypal.client_id')) && filled(config('services.paypal.secret')),
-            'prepayment', 'invoice' => true,
-            default => false,
-        };
+        return [['code' => 'sumup', 'name' => 'Sicher bezahlen mit SumUp']];
     }
 
     public function formatPrice(float $price): string
@@ -361,16 +349,6 @@ class CheckoutPage extends Component
         return round($this->getTotalProperty() - $this->netSubtotal, 2);
     }
 
-    public function getPrepaymentBankDataProperty(): array
-    {
-        return [
-            'holder' => (string) Setting::get('prepayment_bank_account_holder', ''),
-            'bank' => (string) Setting::get('prepayment_bank_name', ''),
-            'iban' => (string) Setting::get('prepayment_iban', ''),
-            'bic' => (string) Setting::get('prepayment_bic', ''),
-        ];
-    }
-
     /**
      * E-Mail für Shop-Benachrichtigungen: Setting `order_notification_email`, sonst `config('shop.order_notification_email')`.
      */
@@ -389,109 +367,32 @@ class CheckoutPage extends Component
         return null;
     }
 
+    /**
+     * DSGVO: keine vollständigen Kunden-E-Mails in Log-Dateien.
+     */
+    protected static function maskEmail(?string $email): string
+    {
+        $email = (string) $email;
+        $at = strpos($email, '@');
+        if ($at === false) {
+            return $email === '' ? '' : '***';
+        }
+
+        return substr($email, 0, min(2, $at)).'***'.substr($email, $at);
+    }
+
     protected function addressPayload(): array
     {
         return [
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'email' => $this->email,
+            'email' => self::maskEmail($this->email),
             'phone' => $this->phone,
             'street' => $this->street,
             'zip' => $this->zip,
             'city' => $this->city,
             'country' => $this->country,
         ];
-    }
-
-    protected function sendOrderMail(string $recipient, MailableContract $mail): void
-    {
-        if ($mail instanceof ShouldQueue && $this->canQueueMail()) {
-            Mail::to($recipient)->later(now()->addSeconds(2), $mail);
-
-            return;
-        }
-
-        Mail::to($recipient)->send($mail);
-    }
-
-    protected function canQueueMail(): bool
-    {
-        $queueConnection = (string) config('queue.default', 'sync');
-
-        return $queueConnection !== '' && strtolower($queueConnection) !== 'sync';
-    }
-
-    protected function isOnlinePaymentMethod(string $method): bool
-    {
-        return in_array($method, ['stripe', 'card', 'klarna', 'paypal', 'sumup'], true);
-    }
-
-    protected function completeOfflineOrder(Order $order, CartService $cartService): mixed
-    {
-        try {
-            $cartService->clear();
-        } catch (Throwable $e) {
-            ShopErrorLogger::report('checkout.place_order.clear_cart_failed', $e, [
-                'order_id' => $order->id ?? null,
-                'email' => $this->email,
-            ]);
-            Log::channel('checkout_stack')->error('checkout.place_order.clear_cart_failed', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'message' => $e->getMessage(),
-            ]);
-            report($e);
-        }
-
-        $this->dispatch('cartUpdated');
-        session()->flash('completed_order_id', $order->id);
-
-        $mailDriver = (string) config('mail.default');
-        $mailHints = [];
-
-        $confirmEmail = data_get($order->billing_address, 'email');
-        if (is_string($confirmEmail) && filter_var($confirmEmail, FILTER_VALIDATE_EMAIL)) {
-            try {
-                $this->sendOrderMail($confirmEmail, new OrderConfirmed($order));
-            } catch (Throwable $e) {
-                ShopErrorLogger::report('checkout.place_order.customer_mail_failed', $e, [
-                    'order_id' => $order->id ?? null,
-                    'email' => $confirmEmail,
-                ]);
-                report($e);
-                $mailHints[] = 'Die Bestellbestätigung per E-Mail konnte nicht gesendet werden. Wir haben deine Bestellung trotzdem erhalten.';
-            }
-        } else {
-            $mailHints[] = 'Keine gültige E-Mail in der Bestellung — Bestellbestätigung wurde nicht versendet.';
-        }
-
-        $shopNotify = self::resolveShopOrderNotificationEmail();
-        if ($shopNotify !== null) {
-            try {
-                $this->sendOrderMail($shopNotify, new AdminOrderNotification($order));
-            } catch (Throwable $e) {
-                ShopErrorLogger::report('checkout.place_order.admin_mail_failed', $e, [
-                    'order_id' => $order->id ?? null,
-                    'email' => $shopNotify,
-                ]);
-                report($e);
-                $mailHints[] = 'Die interne Bestellbenachrichtigung konnte nicht gesendet werden.';
-            }
-        }
-
-        if ($mailDriver === 'log') {
-            $mailHints[] = 'Hinweis: MAIL_MAILER=log — E-Mails landen nur in storage/logs/laravel.log, nicht im Posteingang.';
-        }
-
-        if ($mailHints !== []) {
-            session()->flash('order_mail_hints', $mailHints);
-        }
-
-        return redirect()->temporarySignedRoute(
-            'checkout.success',
-            now()->addDays(7),
-            ['orderNumber' => $order->order_number],
-        );
     }
 
     public function render()

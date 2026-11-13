@@ -111,14 +111,21 @@
                 </li>
             @endforeach
         </ul>
+        @if ((float) $order->shipping_cost > 0)
+            <div class="flex items-center justify-between border-t border-white/10 px-5 py-3">
+                <span class="text-sm text-mochi-muted">Versand</span>
+                <span class="text-sm font-semibold text-white">{{ $this->formatMoney($order->shipping_cost) }}</span>
+            </div>
+        @endif
         <div class="flex items-center justify-between border-t border-white/10 bg-[#040712]/40 px-5 py-4">
-            <span class="text-sm font-medium text-mochi-muted">Gesamtbetrag</span>
+            <span class="text-sm font-medium text-mochi-muted">Gesamtbetrag (inkl. MwSt.)</span>
             <span class="text-lg font-bold text-white">{{ $this->formatMoney($order->total) }}</span>
         </div>
     </div>
 
     <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <a
+@if ($order->isPaid())
+                <a
             href="{{ $this->invoiceDownloadUrl() }}"
             class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-mochi-text transition hover:border-mochi-accent/35 hover:bg-mochi-accent/10 sm:w-auto"
         >
@@ -127,6 +134,7 @@
             </svg>
             Rechnung herunterladen
         </a>
+        @endif
         <a
             href="{{ route('shop') }}"
             wire:navigate

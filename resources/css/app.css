@@ -1111,7 +1111,7 @@
         left: 0;
         z-index: 45;
         border-top: 1px solid rgb(255 255 255 / 0.1);
-        background: linear-gradient(180deg, rgb(4 7 18 / 0.92) 0%, rgb(8 12 18 / 0.98) 100%);
+        background: #060a14;
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         padding-bottom: env(safe-area-inset-bottom, 0);
@@ -1241,5 +1241,465 @@ body.lw-navigating-fast .nav-progress {
         animation: none;
         opacity: 0.55;
         transform: scale(1);
+    }
+}
+
+/* ==========================================================================
+   App-Shell — fühlt sich auf Handy/Tablet wie eine native App an
+   ========================================================================== */
+
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 160ms;
+    animation-timing-function: var(--mochi-ease-smooth);
+}
+
+/* Die Kartenhülle des aktiven Tabs gleitet beim Seitenwechsel zum neuen Tab. */
+::view-transition-group(app-tab-sleeve) {
+    animation-duration: 320ms;
+    animation-timing-function: var(--mochi-ease-smooth);
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    a,
+    button,
+    [role='button'],
+    label,
+    summary {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-mochi-accent-strong);
+        outline-offset: 2px;
+    }
+
+    img {
+        -webkit-user-drag: none;
+    }
+
+    /* iOS zoomt bei Feldern < 16px automatisch hinein — das wirkt nicht wie eine App. */
+    @media (max-width: 767px) {
+        input:not([type='checkbox']):not([type='radio']),
+        select,
+        textarea {
+            font-size: max(16px, 1em);
+        }
+    }
+}
+
+/* Statusleiste/Notch: Header rutscht unter die Safe-Area (viewport-fit=cover). */
+.mochi-header,
+.mochi-header-glass {
+    padding-top: env(safe-area-inset-top, 0);
+}
+
+#global-shop-toast {
+    top: calc(5.5rem + env(safe-area-inset-top, 0));
+}
+
+/* Installierte App: kein Gummiband-Scrollen der ganzen Seite, keine Text-Markierung in Leisten. */
+html.is-standalone {
+    overscroll-behavior-y: none;
+}
+
+html.is-standalone .app-tabbar,
+html.is-standalone .mochi-header,
+html.is-standalone .mochi-header-glass {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ---------- Tab-Leiste ---------- */
+
+.app-tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 45;
+    padding: 0.375rem max(0.5rem, env(safe-area-inset-left)) calc(0.375rem + env(safe-area-inset-bottom, 0))
+        max(0.5rem, env(safe-area-inset-right));
+    background: rgb(4 7 18 / 0.96);
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+
+.app-tabbar ul {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.app-tab {
+    position: relative;
+    display: flex;
+    min-height: 3.25rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: var(--color-mochi-muted);
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: color 150ms var(--mochi-ease-smooth);
+}
+
+.app-tab:active .app-tab-icon {
+    transform: scale(0.88);
+}
+
+.app-tab.is-active {
+    color: var(--color-mochi-text);
+}
+
+.app-tab.is-active .app-tab-icon {
+    color: var(--color-mochi-accent);
+}
+
+.app-tab-icon {
+    position: relative;
+    display: inline-flex;
+    transition: transform 120ms var(--mochi-ease-smooth);
+}
+
+.app-tab-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.app-tab-label {
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Kartenhülle (TCG-Sleeve): Hochformat, leicht gekippt, orange Kante. */
+.app-tab-sleeve {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2.75rem;
+    height: 3.15rem;
+    border: 1.5px solid rgb(255 122 31 / 0.55);
+    border-radius: 0.55rem;
+    background: linear-gradient(165deg, rgb(255 122 31 / 0.2) 0%, rgb(255 181 71 / 0.04) 70%);
+    box-shadow: 0 0 22px -8px rgb(255 122 31 / 0.65);
+    transform: translate(-50%, -50%) rotate(-4deg);
+    view-transition-name: app-tab-sleeve;
+    pointer-events: none;
+}
+
+.app-tab-badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.65rem;
+    display: inline-flex;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: var(--color-mochi-accent);
+    color: #0b0f16;
+    font-size: 0.625rem;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px #040712;
+}
+
+.app-tab-badge[hidden] {
+    display: none;
+}
+
+/* Platz schaffen, damit Inhalte & Footer nie unter der Leiste verschwinden. */
+@media (max-width: 767px) {
+    body:has(.app-tabbar) {
+        padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
+    }
+
+    body:has(.app-tabbar) .checkout-sticky-cta {
+        bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    @view-transition {
+        navigation: none;
+    }
+
+    .app-tab,
+    .app-tab-icon {
+        transition: none;
+    }
+}
+
+
+/* ---------- Kaufleiste (Handy): Preis + Hauptaktion über der Tab-Leiste ---------- */
+.app-buybar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+    z-index: 44;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.625rem max(1rem, env(safe-area-inset-right)) 0.625rem max(1rem, env(safe-area-inset-left));
+    background: #060a14;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+/* ---------- Karten-Button in der Shop-Übersicht ---------- */
+.shop-card-btn {
+    display: inline-flex;
+    width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0 0.5rem;
+    border-radius: 0.75rem;
+    background: var(--color-mochi-accent);
+    color: #0b0f16;
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.1;
+    text-align: center;
+    transition:
+        background-color 150ms var(--mochi-ease-smooth),
+        transform 120ms var(--mochi-ease-smooth);
+}
+
+.shop-card-btn:hover {
+    background: var(--color-mochi-accent-strong);
+}
+
+.shop-card-btn:active {
+    transform: scale(0.97);
+}
+
+.shop-card-btn:disabled {
+    opacity: 0.6;
+}
+
+.shop-card-btn--ghost {
+    background: transparent;
+    color: var(--color-mochi-text);
+    border: 1px solid rgb(255 255 255 / 0.18);
+}
+
+.shop-card-btn--ghost:hover {
+    background: rgb(255 255 255 / 0.06);
+}
+
+@media (max-width: 380px) {
+    .shop-card-btn svg {
+        display: none;
+    }
+}
+
+/* ---------- „Mehr“-Menü (Bottom Sheet) ---------- */
+.app-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 46;
+    background: rgb(4 7 18 / 0.7);
+}
+
+.app-sheet {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 47;
+    max-height: 85dvh;
+    overflow-y: auto;
+    padding: 0.5rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0));
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+    background: #0b1120;
+}
+
+.app-sheet-grip {
+    width: 2.5rem;
+    height: 0.25rem;
+    margin: 0.25rem auto 0.75rem;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.2);
+}
+
+.app-sheet a.app-sheet-link,
+.app-sheet button.app-sheet-link {
+    display: flex;
+    width: 100%;
+    min-height: 3.25rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07);
+    color: var(--color-mochi-text);
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: left;
+}
+
+.app-sheet .app-sheet-link svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-mochi-muted);
+}
+
+
+/* ==========================================================================
+   Ruhig & flüssig
+   Grundsatz: Bewegung nur über transform/opacity (läuft auf der Grafikkarte),
+   nichts, was beim Scrollen jedes Bild neu berechnet werden muss.
+   ========================================================================== */
+
+/* --- 1) Teure Dauereffekte abschalten ---------------------------------- */
+
+/* Milchglas (backdrop-filter) muss bei jedem Scroll-Bild den Hintergrund neu weichzeichnen —
+   auf großen/hochauflösenden Bildschirmen der häufigste Grund für Ruckeln. Stattdessen: deckende Fläche. */
+.mochi-header {
+    transition:
+        background-color 0.25s var(--mochi-ease-smooth),
+        border-color 0.25s var(--mochi-ease-smooth),
+        box-shadow 0.25s var(--mochi-ease-smooth);
+}
+
+.mochi-header--scrolled,
+.mochi-header-glass {
+    background: rgb(4 7 18 / 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.app-tabbar,
+.drawer-panel,
+.drawer-backdrop,
+.checkout-sticky-cta {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Hintergrund-Leuchten bleibt als ruhige Fläche stehen statt dauerhaft zu wandern. */
+.mochi-orb-engine *,
+.mochi-pokeball-drift,
+.mochi-hero-renner-orb {
+    animation: none !important;
+    will-change: auto !important;
+}
+
+.mochi-orb-anchor,
+.mochi-pokeball-anchor {
+    will-change: auto;
+    transform: none !important;
+}
+
+/* Endlos-Glühen per box-shadow malt die Fläche ständig neu (kein transform) → aus. */
+.mochi-cta-pulse {
+    animation: none;
+}
+
+/* --- 2) Seitenwechsel: Kopf und Tab-Leiste bleiben stehen, Inhalt blendet weich über --- */
+
+#mochi-site-header {
+    view-transition-name: site-header;
+}
+
+.app-tabbar {
+    view-transition-name: app-tabbar;
+}
+
+@keyframes mochi-page-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes mochi-page-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 8px, 0);
+    }
+}
+
+::view-transition-old(root) {
+    animation: mochi-page-out 110ms var(--mochi-ease-smooth) both;
+}
+
+::view-transition-new(root) {
+    animation: mochi-page-in 260ms var(--mochi-ease-smooth) both;
+}
+
+::view-transition-group(site-header),
+::view-transition-group(app-tabbar) {
+    animation-duration: 0s;
+}
+
+/* --- 3) Abschnitte gleiten beim Scrollen sanft herein -------------------
+   Rein per CSS an die Scroll-Position gekoppelt (kein JavaScript, kein Scroll-Listener).
+   Browser ohne Unterstützung zeigen die Inhalte einfach sofort. */
+
+@keyframes mochi-reveal {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 22px, 0);
+    }
+}
+
+@supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+        main section + section,
+        main .mochi-collectible-card {
+            animation: mochi-reveal linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 38%;
+        }
+    }
+}
+
+/* --- 4) Kleinigkeiten, die sich „weich“ anfühlen ------------------------ */
+
+html {
+    scroll-padding-top: 5.5rem;
+}
+
+main a,
+main button,
+.mochi-cta,
+.mochi-gradient-button,
+.shop-card-btn {
+    transition-duration: 180ms;
+    transition-timing-function: var(--mochi-ease-smooth);
+}
+
+.mochi-cta:active,
+.mochi-gradient-button:active {
+    transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
     }
 }

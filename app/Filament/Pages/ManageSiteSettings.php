@@ -32,15 +32,15 @@ class ManageSiteSettings extends Page
 {
     use CanUseDatabaseTransactions;
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $slug = 'site-einstellungen';
 
-    protected static ?string $navigationLabel = 'Website-Einstellungen';
+    protected static ?string $navigationLabel = 'Startseite';
 
-    protected static string|UnitEnum|null $navigationGroup = '⚙️ System & Technik';
+    protected static string|UnitEnum|null $navigationGroup = '📰 Inhalte';
 
-    protected static ?int $navigationSort = 99;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $title = 'Website-Einstellungen';
 
@@ -127,30 +127,35 @@ class ManageSiteSettings extends Page
 
         return $schema
             ->components([
-                Section::make('Startseite · Das Wesentliche')
-                    ->description('Hero links: Headline & Laden-CTA. Rechts: Shop-Renner mit Bild, Name, Preis und Link.')
+                Section::make('Startseite')
+                    ->description('Links steht die große Überschrift, rechts die Highlight-Karte.')
                     ->schema([
                         TextInput::make('hero_headline')
-                            ->label('Hero-Headline')
+                            ->label('Große Überschrift')
                             ->maxLength(255)
                             ->placeholder('z. B. Dein Wohnzimmer für TCG in Speyer')
                             ->columnSpanFull(),
                         TextInput::make('hero_visit_store_url')
-                            ->label('Laden-CTA (Call to Action)')
+                            ->label('Link für „Besuch uns im Laden“')
                             ->url()
                             ->maxLength(2048)
                             ->columnSpanFull()
                             ->helperText('Link für „Besuch uns im Laden“ (z. B. Google Maps). Leer = Standard-Suche „Mochi Cards Speyer“ aus der Konfiguration.'),
-                        TextInput::make('shop_cta_url')
-                            ->label('Haupt-Link zum Shop')
-                            ->url()
-                            ->maxLength(2048)
-                            ->helperText(
-                                'Steuert die Shop-Links im Header (mobil & Desktop). '
-                                .'Auf der Startseite: Basis für die Shop-Renner-Kachel nur, wenn „Direktlink zum Artikel“ unten leer ist — sonst nutzt der Button dort den Direktlink.',
-                            ),
+                        Select::make('featured_product_id')
+                            ->label('Highlight-Karte: Produkt aus dem Shop')
+                            ->options(fn (): array => \App\Models\Product::query()
+                                ->where('is_active', true)
+                                ->orderBy('name')
+                                ->limit(500)
+                                ->pluck('name', 'id')
+                                ->mapWithKeys(fn ($name, $id): array => [(string) $id => (string) $name])
+                                ->all())
+                            ->searchable()
+                            ->placeholder('Automatisch (hervorgehobenes oder neuestes Produkt)')
+                            ->helperText('Einfach ein Produkt wählen — Bild, Name, Preis und Link kommen von selbst. Das ist alles. Die Felder darunter braucht ihr nur für eine ganz eigene Karte (z. B. eine Aktion ohne Produkt).')
+                            ->columnSpanFull(),
                         FileUpload::make('featured_product_image_path')
-                            ->label('Shop-Renner · Bild')
+                            ->label('Eigene Karte · Bild')
                             ->image()
                             ->disk('public')
                             ->directory('site/featured')
@@ -165,32 +170,29 @@ class ManageSiteSettings extends Page
                             ->live()
                             ->columnSpanFull(),
                         TextInput::make('featured_product_title')
-                            ->label('Shop-Renner · Name')
+                            ->label('Eigene Karte · Titel')
                             ->maxLength(255)
                             ->live(onBlur: true),
                         Textarea::make('featured_product_description')
-                            ->label('Shop-Renner · Beschreibung (optional)')
+                            ->label('Eigene Karte · Text (optional)')
                             ->rows(5)
                             ->maxLength(2000)
                             ->columnSpanFull()
-                            ->helperText('Wird unter dem Bild/Artwork angezeigt. Leer = Standardtext aus der Konfiguration (Community-Token-Story).'),
+                            ->helperText('Steht unter dem Bild.'),
                         TextInput::make('featured_product_price')
-                            ->label('Shop-Renner · Preis')
+                            ->label('Eigene Karte · Preis (optional)')
                             ->maxLength(64)
                             ->placeholder('z. B. 49,99 €')
                             ->live(onBlur: true),
                         TextInput::make('featured_product_url')
-                            ->label('Shop-Renner · Direktlink zum Artikel')
+                            ->label('Eigene Karte · Link (optional)')
                             ->url()
                             ->maxLength(2048)
                             ->columnSpanFull()
                             ->live(onBlur: true)
-                            ->helperText(
-                                'Wenn ausgefüllt: der Button „Zum Shop“ auf der großen Kachel führt genau hierhin (überschreibt den Haupt-Link). '
-                                .'Wenn leer: Kachel nutzt den Haupt-Link oben bzw. den ersten Eintrag unter „Shop-Verbindung“.',
-                            ),
+                            ->helperText('Wohin der Button führt. Leer = in den Shop.'),
                         ViewField::make('shop_renner_preview')
-                            ->label('Vorschau Shop-Renner')
+                            ->label('Vorschau der eigenen Karte')
                             ->dehydrated(false)
                             ->view('filament.site-settings.hero-renner-preview')
                             ->viewData(function (Get $get): array {
@@ -235,16 +237,13 @@ class ManageSiteSettings extends Page
                             ->disk('public')
                             ->directory('site/hero')
                             ->imageEditor()
-                            ->helperText('Ohne Upload wird das Platzhalter-Logo aus public/images/mochi-logo-placeholder.png verwendet.'),
+                            ->helperText('Ohne Upload wird das mitgelieferte Mochi-Cards-Logo verwendet.'),
                         FileUpload::make('hero_background_path')
                             ->label('Hero-Hintergrundbild (optional)')
                             ->image()
                             ->disk('public')
                             ->directory('site/hero')
                             ->imageEditor(),
-                        TextInput::make('featured_product_id')
-                            ->label('Interne Produkt-ID (nur Anzeige, optional)')
-                            ->maxLength(255),
                         TextInput::make('hero_subline')
                             ->label('Zusatztext (wird im neuen Layout nicht verwendet)')
                             ->maxLength(255)

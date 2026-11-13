@@ -3,7 +3,7 @@
 @endphp
 
 <div
-    class="relative mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 md:pb-10 lg:px-8 lg:py-14"
+    class="relative mx-auto max-w-6xl px-4 pb-40 pt-10 sm:px-6 md:pb-10 lg:px-8 lg:py-14"
     x-on:mochi-turnstile.window="$wire.set('turnstileToken', $event.detail.token)"
 >
     <div
@@ -30,9 +30,9 @@
         </div>
     </div>
 
-    <h1 class="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Checkout</h1>
+    <h1 class="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Kasse</h1>
     <p class="mt-2 max-w-2xl text-sm text-mochi-muted">
-        Prüfe deine Angaben und schließe die Bestellung ab. Die Zahlung erfolgt über den gewählten Zahlungsdienstleister (siehe Datenschutzerklärung).
+        Prüfe deine Angaben und schließe die Bestellung ab. Bezahlt wird im nächsten Schritt sicher über SumUp.
     </p>
 
     @if ($errors->has('cart'))
@@ -196,58 +196,25 @@
 
             <section class="mochi-card rounded-2xl border border-white/10 bg-[#080c12]/40 p-6 backdrop-blur-xl sm:p-8">
                 <h2 class="text-lg font-semibold text-white">Zahlungsart</h2>
-                <p class="mt-1 text-sm text-mochi-muted">Wähle, wie du bezahlen möchtest. Externe Zahlungsanbieter können eigene Cookies setzen.</p>
-                <div class="mt-6 space-y-3">
-                    @forelse ($this->paymentMethods as $method)
-                        <label
-                            class="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-mochi-accent/30 has-[:checked]:border-mochi-accent/45 has-[:checked]:bg-mochi-accent/10"
-                        >
-                            <input
-                                type="radio"
-                                wire:model.defer="payment_method"
-                                value="{{ $method['code'] }}"
-                                class="mt-1 h-5 w-5 shrink-0 border-white/20 bg-[#040712] text-mochi-accent focus:ring-mochi-accent/40"
-                            />
-                            <span class="flex w-full items-center justify-between gap-3">
-                                <span class="text-sm font-medium text-mochi-text">{{ $method['name'] }}</span>
-                                <span
-                                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-200 ring-1 ring-emerald-400/25"
-                                >
-                                    <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
-                                    {{ $method['code'] === 'sumup' ? 'SumUp' : strtoupper($method['code']) }}
-                                </span>
-                            </span>
-                        </label>
-                    @empty
-                        <div class="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
-                            Online-Zahlung ist noch nicht eingerichtet. Bitte kontaktiere den Laden.
+                <p class="mt-1 text-sm text-mochi-muted">Die Zahlung läuft über unseren Zahlungsdienstleister SumUp, der eigene Cookies setzen kann.</p>
+                @if ($this->paymentMethods !== [])
+                    <div class="mt-6 flex items-start gap-3 rounded-xl border border-mochi-accent/45 bg-mochi-accent/10 px-4 py-3">
+                        <svg class="mt-0.5 h-5 w-5 shrink-0 text-mochi-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-mochi-text">Sicher bezahlen mit SumUp</p>
+                            <p class="mt-1 text-sm text-mochi-muted">Nach „Zahlungspflichtig bestellen“ leiten wir dich zur Bezahlseite von SumUp weiter. Deine Artikel sind 30&nbsp;Minuten für dich reserviert.</p>
                         </div>
-                    @endforelse
-                </div>
+                    </div>
+                @else
+                    <div class="mt-6 rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
+                        Online-Zahlung ist noch nicht eingerichtet. Bitte kontaktiere den Laden.
+                    </div>
+                @endif
                 @error('payment_method')
                     <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
                 @enderror
-
-                @if ($payment_method === 'prepayment')
-                    <div class="mt-4 rounded-xl border border-mochi-accent/25 bg-mochi-accent/10 px-4 py-3 text-sm text-mochi-text">
-                        <p class="font-semibold text-white">Hinweis zur Vorkasse</p>
-                        <p class="mt-1 text-mochi-muted">Bitte überweise nach Bestellabschluss unter Angabe deiner Bestellnummer.</p>
-                        <ul class="mt-2 space-y-1 text-mochi-muted">
-                            @if (filled($this->prepaymentBankData['holder']))
-                                <li><span class="font-medium text-mochi-text">Kontoinhaber:</span> {{ $this->prepaymentBankData['holder'] }}</li>
-                            @endif
-                            @if (filled($this->prepaymentBankData['bank']))
-                                <li><span class="font-medium text-mochi-text">Bank:</span> {{ $this->prepaymentBankData['bank'] }}</li>
-                            @endif
-                            @if (filled($this->prepaymentBankData['iban']))
-                                <li><span class="font-medium text-mochi-text">IBAN:</span> {{ $this->prepaymentBankData['iban'] }}</li>
-                            @endif
-                            @if (filled($this->prepaymentBankData['bic']))
-                                <li><span class="font-medium text-mochi-text">BIC:</span> {{ $this->prepaymentBankData['bic'] }}</li>
-                            @endif
-                        </ul>
-                    </div>
-                @endif
             </section>
 
             <section class="mochi-card rounded-2xl border border-white/10 bg-[#080c12]/40 p-6 backdrop-blur-xl sm:p-8">
@@ -290,7 +257,7 @@
                         <div class="space-y-2 text-sm">
                             <div class="flex items-center justify-between">
                                 <span class="text-mochi-muted">Versand</span>
-                                <span class="font-medium text-white">Kostenfrei</span>
+                                <span class="font-medium text-white">{{ $this->shippingCost > 0 ? $this->formatPrice($this->shippingCost) : 'Kostenfrei' }}</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-mochi-muted">Nettosumme</span>
@@ -367,17 +334,17 @@
     </form>
 
     <div class="checkout-sticky-cta md:hidden">
-        <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-            <div class="min-w-0 flex-1">
-                <p class="text-[11px] font-medium uppercase tracking-wide text-mochi-muted">Gesamt</p>
-                <p class="truncate text-base font-bold text-white">{{ $this->formatPrice($this->total) }}</p>
+        <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3">
+            <div class="flex items-baseline justify-between gap-3">
+                <p class="text-sm text-mochi-muted">Gesamt inkl. MwSt.</p>
+                <p class="text-base font-bold tabular-nums text-white">{{ $this->formatPrice($this->total) }}</p>
             </div>
             <button
                 type="submit"
                 form="checkout-form"
                 wire:loading.attr="disabled"
                 wire:target="placeOrder"
-                class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 shrink-0 px-6"
+                class="mochi-gradient-button mochi-gradient-button-sm inline-flex min-h-12 w-full justify-center px-4"
             >
                 <span wire:loading.remove wire:target="placeOrder">Jetzt zahlungspflichtig bestellen</span>
                 <span wire:loading wire:target="placeOrder" class="inline-flex items-center gap-2">

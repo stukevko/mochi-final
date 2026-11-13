@@ -44,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 \App\Http\Middleware\ForceHttps::class,
             ],
         );
+        $middleware->append(\App\Http\Middleware\RunWebCron::class);
         $middleware->append(\App\Http\Middleware\StaticAssetCacheHeaders::class);
         $middleware->append(\App\Http\Middleware\SecurityHeadersMiddleware::class);
         $middleware->alias([

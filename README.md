@@ -40,6 +40,17 @@ php artisan shop:ensure-admin
 composer run dev          # Server :8008 + Queue + Vite
 ```
 
+### Variante 0 – Normaler Webspace (am einfachsten, ohne SSH)
+
+1. Das fertige **Webspace-Paket** herunterladen: GitHub → *Releases* → `mochi-cards-webspace.zip`.
+2. Entpacken und alles per FTP in den Domain-Ordner hochladen (inkl. `.htaccess`).
+3. Domain im Browser öffnen — der **Einrichtungs-Assistent** fragt Shop-Name, Admin-Zugang, SumUp und
+   E-Mail-Postfach ab und richtet alles ein (Datenbank inklusive).
+
+Voraussetzung: PHP ≥ 8.3 und Apache mit `mod_rewrite` (Standard bei fast allen Hostern).
+Es wird **kein Cronjob** gebraucht: Zahlungs- und Kassenabgleich laufen automatisch mit.
+Updates: neues Paket drüberkopieren, Seite einmal öffnen — fertig. Details: `deploy/LIESMICH-WEBSPACE.txt`.
+
 ### Variante C – Server (nginx/PHP-FPM oder Apache/Shared Hosting)
 
 ```bash

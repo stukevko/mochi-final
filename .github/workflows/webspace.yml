@@ -1,0 +1,112 @@
+name: Webspace-Paket
+
+# Baut das fertige ZIP zum Hochladen per FTP (inkl. aller Programm- und Design-Dateien),
+# installiert es testweise auf einem Apache-Webserver und veröffentlicht es als Release.
+on:
+  push:
+    branches: [main, 'update/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  paket:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, gd, sqlite3, pdo_sqlite, mbstring, zip, bcmath
+          coverage: none
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Paket bauen
+        run: |
+          npm ci --no-audit --no-fund
+          composer install --no-interaction --prefer-dist   # dev nötig für den Theme-Build
+          npm run build
+          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+          mkdir -p dist/mochi-cards
+          rsync -a ./ dist/mochi-cards/ \
+            --exclude .git --exclude .github --exclude node_modules --exclude tests --exclude dist \
+            --exclude '.env' --exclude '.env.*' --exclude Dockerfile --exclude docker-compose.yml --exclude .dockerignore \
+            --exclude phpunit.xml --exclude '*.code-workspace' --exclude 'README_ADMIN_KUNDE.pdf' \
+            --exclude 'database/*.sqlite' --exclude 'storage/logs/*.log' --exclude public/hot --exclude public/storage \
+            --exclude 'storage/framework/views/*.php' --exclude 'storage/framework/cache/data/*' --exclude 'storage/framework/sessions/*' \
+            --exclude 'storage/app/installed.lock' --exclude 'storage/app/schema-version'
+          cp deploy/LIESMICH-WEBSPACE.txt dist/mochi-cards/LIESMICH.txt
+          # Zusätzliche Sperre für interne Ordner (falls ein Hoster die Haupt-.htaccess anders auswertet)
+          for d in app bootstrap config database deploy lang resources routes storage vendor; do
+            if [ -d "dist/mochi-cards/$d" ] && [ ! -f "dist/mochi-cards/$d/.htaccess" ]; then
+              printf '<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n' > "dist/mochi-cards/$d/.htaccess"
+            fi
+          done
+          (cd dist/mochi-cards && zip -qr ../mochi-cards-webspace.zip . )
+          ls -lh dist/mochi-cards-webspace.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mochi-cards-webspace
+          path: dist/mochi-cards-webspace.zip
+
+      - name: Testinstallation auf Apache (wie beim Hoster)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq apache2 libapache2-mod-php php-intl php-gd php-sqlite3 php-mbstring php-xml php-curl php-zip > /dev/null
+          sudo mkdir -p /var/www/shop && sudo unzip -q dist/mochi-cards-webspace.zip -d /var/www/shop
+          sudo chown -R www-data:www-data /var/www/shop
+          sudo tee /etc/apache2/sites-available/000-default.conf > /dev/null <<'CONF'
+          <VirtualHost *:80>
+              DocumentRoot /var/www/shop
+              <Directory /var/www/shop>
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+          </VirtualHost>
+          CONF
+          sudo a2enmod rewrite headers > /dev/null
+          sudo systemctl restart apache2
+          php -v | head -1
+          B=http://localhost
+          code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+          expect() { if [ "$2" != "$3" ]; then echo "FEHLER: $1 → $2 (erwartet $3)"; sudo tail -n 30 /var/www/shop/storage/logs/*.log 2>/dev/null; sudo tail -n 20 /var/log/apache2/error.log; exit 1; else echo "ok: $1 → $2"; fi; }
+
+          expect "Start leitet zum Assistenten" "$(code $B/)" 302
+          curl -s -c /tmp/c $B/install.php -o /tmp/form.html
+          grep -q "Shop einrichten" /tmp/form.html || { echo "Assistent zeigt kein Formular:"; sed 's/<[^>]*>/ /g' /tmp/form.html | tr -s ' \n' | head -c 1500; exit 1; }
+          TOKEN=$(grep -o 'name="token" value="[^"]*"' /tmp/form.html | sed 's/.*value="//; s/"//')
+          curl -s -b /tmp/c -o /tmp/done.html $B/install.php \
+            --data-urlencode "token=$TOKEN" --data-urlencode "shop_name=Mochi Cards" \
+            --data-urlencode "admin_name=Test" --data-urlencode "admin_email=admin@example.test" \
+            --data-urlencode "admin_password=Sicher-12345" --data-urlencode "admin_password_repeat=Sicher-12345" \
+            --data-urlencode "db=sqlite"
+          grep -q "Fertig" /tmp/done.html || { echo "Einrichtung fehlgeschlagen:"; sed 's/<[^>]*>/ /g' /tmp/done.html | tr -s ' \n' | head -c 2000; exit 1; }
+          echo "ok: Einrichtung abgeschlossen"
+
+          expect "Startseite" "$(code $B/)" 200
+          expect "Shop" "$(code $B/shop)" 200
+          expect "Kasse" "$(code $B/checkout)" 200
+          expect "Admin-Login" "$(code $B/admin/login)" 200
+          expect "Design-Datei" "$(code $B/build/manifest.json)" 200
+          expect "App-Manifest" "$(code $B/manifest.webmanifest)" 200
+          expect "Assistent gesperrt" "$(code $B/install.php)" 403
+          for secret in .env database/database.sqlite vendor/autoload.php storage/logs/laravel.log composer.json artisan config/app.php; do
+            c=$(code "$B/$secret"); if [ "$c" = "200" ]; then echo "FEHLER: /$secret ist öffentlich erreichbar"; exit 1; else echo "ok: /$secret gesperrt ($c)"; fi
+          done
+          # Anmeldung im Admin funktioniert (Sitzung, Datenbank, Schreibrechte)
+          curl -s $B/shop | grep -q "Alle Produkte" && echo "ok: Shop-Seite rendert"
+
+      - name: Als Release veröffentlichen (nur main)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete webspace-paket --yes --cleanup-tag 2>/dev/null || true
+          gh release create webspace-paket dist/mochi-cards-webspace.zip --latest \
+            --title "Webspace-Paket (aktuell)" \
+            --notes "Fertiges Paket für normalen Webspace: entpacken, per FTP hochladen, Domain im Browser öffnen. Anleitung: LIESMICH.txt im Paket."

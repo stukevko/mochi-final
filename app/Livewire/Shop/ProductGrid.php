@@ -77,7 +77,7 @@ class ProductGrid extends Component
             $ids = array_values(array_filter($cached['ids'], fn ($id): bool => is_int($id) || ctype_digit((string) $id)));
 
             if ($ids === []) {
-                return Category::newCollection();
+                return (new Category)->newCollection();
             }
 
             return Category::query()

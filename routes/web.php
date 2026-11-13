@@ -81,6 +81,16 @@ Route::middleware('cache.headers:no_store;private')->group(function (): void {
         ->name('payment.return');
 });
 
+// Für Hoster mit „Cronjob per URL“ (optional; ohne läuft alles automatisch über Seitenaufrufe mit).
+Route::get('/cron/{token}', function (string $token, \App\Services\WebCronRunner $runner) {
+    $expected = (string) config('shop.cron_token');
+    abort_unless($expected !== '' && hash_equals($expected, $token), 404);
+
+    $runner->run(force: true);
+
+    return response('OK', 200, ['Content-Type' => 'text/plain', 'Cache-Control' => 'no-store']);
+})->middleware('throttle:10,1')->name('cron.run');
+
 // SumUp-Webhook: Inhalt wird nicht vertraut, Status wird bei SumUp nachgefragt (siehe Controller).
 Route::post('/webhooks/payment/sumup', [PaymentWebhookController::class, 'sumup'])
     ->middleware('throttle:120,1')

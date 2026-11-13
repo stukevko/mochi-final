@@ -119,13 +119,11 @@ function initMochiHeaderScroll() {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        initMochiParallaxOrbs();
         initMochiHeaderScroll();
         initMochiMobileNav();
         initCookieConsent();
     });
 } else {
-    initMochiParallaxOrbs();
     initMochiHeaderScroll();
     initMochiMobileNav();
     initCookieConsent();

@@ -1566,3 +1566,140 @@ html.is-standalone .mochi-header-glass {
     height: 1rem;
     color: var(--color-mochi-muted);
 }
+
+
+/* ==========================================================================
+   Ruhig & flüssig
+   Grundsatz: Bewegung nur über transform/opacity (läuft auf der Grafikkarte),
+   nichts, was beim Scrollen jedes Bild neu berechnet werden muss.
+   ========================================================================== */
+
+/* --- 1) Teure Dauereffekte abschalten ---------------------------------- */
+
+/* Milchglas (backdrop-filter) muss bei jedem Scroll-Bild den Hintergrund neu weichzeichnen —
+   auf großen/hochauflösenden Bildschirmen der häufigste Grund für Ruckeln. Stattdessen: deckende Fläche. */
+.mochi-header {
+    transition:
+        background-color 0.25s var(--mochi-ease-smooth),
+        border-color 0.25s var(--mochi-ease-smooth),
+        box-shadow 0.25s var(--mochi-ease-smooth);
+}
+
+.mochi-header--scrolled,
+.mochi-header-glass {
+    background: rgb(4 7 18 / 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.app-tabbar,
+.drawer-panel,
+.drawer-backdrop,
+.checkout-sticky-cta {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Hintergrund-Leuchten bleibt als ruhige Fläche stehen statt dauerhaft zu wandern. */
+.mochi-orb-engine *,
+.mochi-pokeball-drift,
+.mochi-hero-renner-orb {
+    animation: none !important;
+    will-change: auto !important;
+}
+
+.mochi-orb-anchor,
+.mochi-pokeball-anchor {
+    will-change: auto;
+    transform: none !important;
+}
+
+/* Endlos-Glühen per box-shadow malt die Fläche ständig neu (kein transform) → aus. */
+.mochi-cta-pulse {
+    animation: none;
+}
+
+/* --- 2) Seitenwechsel: Kopf und Tab-Leiste bleiben stehen, Inhalt blendet weich über --- */
+
+#mochi-site-header {
+    view-transition-name: site-header;
+}
+
+.app-tabbar {
+    view-transition-name: app-tabbar;
+}
+
+@keyframes mochi-page-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes mochi-page-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 8px, 0);
+    }
+}
+
+::view-transition-old(root) {
+    animation: mochi-page-out 110ms var(--mochi-ease-smooth) both;
+}
+
+::view-transition-new(root) {
+    animation: mochi-page-in 260ms var(--mochi-ease-smooth) both;
+}
+
+::view-transition-group(site-header),
+::view-transition-group(app-tabbar) {
+    animation-duration: 0s;
+}
+
+/* --- 3) Abschnitte gleiten beim Scrollen sanft herein -------------------
+   Rein per CSS an die Scroll-Position gekoppelt (kein JavaScript, kein Scroll-Listener).
+   Browser ohne Unterstützung zeigen die Inhalte einfach sofort. */
+
+@keyframes mochi-reveal {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 22px, 0);
+    }
+}
+
+@supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+        main section + section,
+        main .mochi-collectible-card {
+            animation: mochi-reveal linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 38%;
+        }
+    }
+}
+
+/* --- 4) Kleinigkeiten, die sich „weich“ anfühlen ------------------------ */
+
+html {
+    scroll-padding-top: 5.5rem;
+}
+
+main a,
+main button,
+.mochi-cta,
+.mochi-gradient-button,
+.shop-card-btn {
+    transition-duration: 180ms;
+    transition-timing-function: var(--mochi-ease-smooth);
+}
+
+.mochi-cta:active,
+.mochi-gradient-button:active {
+    transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+    }
+}

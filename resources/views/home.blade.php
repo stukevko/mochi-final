@@ -3,7 +3,6 @@
 @section('title', $siteName.' · Hub')
 
 @push('promo')
-    @include('partials.event-ticker', ['nextEvent' => $nextEvent])
 @endpush
 
 @section('content')

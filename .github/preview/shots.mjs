@@ -66,7 +66,9 @@ async function login(page) {
 }
 await safe('d-admin', async () => {
     await login(d);
-    await shot(d, '13-admin-dashboard');
+    await shot(d, '13-admin-dashboard', { fullPage: true });
+    await d.goto(base + '/admin/products/create', { waitUntil: 'networkidle' }); await shot(d, '21-admin-produkt-anlegen', { fullPage: true });
+    await d.goto(base + '/admin/manage-site-settings', { waitUntil: 'networkidle' }); await shot(d, '22-admin-startseite', { fullPage: true });
     await d.goto(base + '/admin/orders', { waitUntil: 'networkidle' }); await shot(d, '14-admin-bestellungen');
     await d.goto(base + '/admin/sumup-abgleich', { waitUntil: 'networkidle' }); await shot(d, '15-admin-kasse-und-shop', { fullPage: true });
     await d.goto(base + '/admin/manage-merchant-settings', { waitUntil: 'networkidle' }); await shot(d, '16-admin-einstellungen');
@@ -78,3 +80,4 @@ await browser.close();
 // trigger 1794577253
 // trigger 1794611366
 // trigger 1794612232
+// trigger 1794613012

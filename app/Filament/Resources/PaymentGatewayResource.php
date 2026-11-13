@@ -29,6 +29,9 @@ class PaymentGatewayResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Zahlarten';
     
+    /** Aus dem Menü genommen: für den Laden-Alltag nicht nötig (Seite bleibt per Adresse erreichbar). */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string | \UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
     protected static ?int $navigationSort = 110;

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\OpenContactRequestsWidget;
 use App\Filament\Widgets\RecentCommerceAndEventsWidget;
 use App\Filament\Widgets\SmartPulseStatsWidget;
@@ -27,6 +28,7 @@ class AdminDashboard extends Dashboard
     public function getWidgets(): array
     {
         return [
+            GettingStartedWidget::class,
             SmartPulseStatsWidget::class,
             OpenContactRequestsWidget::class,
             RecentCommerceAndEventsWidget::class,

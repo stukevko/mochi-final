@@ -33,7 +33,7 @@ class ManageBrandingDesign extends Page
 
     protected static string | UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
-    protected static ?string $navigationLabel = 'Branding & Design';
+    protected static ?string $navigationLabel = 'Logo & Farben';
 
     protected static ?int $navigationSort = 120;
 

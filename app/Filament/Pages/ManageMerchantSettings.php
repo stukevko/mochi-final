@@ -34,7 +34,7 @@ class ManageMerchantSettings extends Page
 
     protected static string | UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
-    protected static ?string $navigationLabel = 'Global Settings';
+    protected static ?string $navigationLabel = 'Shop-Daten, Rechnung & Versand';
 
     protected static ?int $navigationSort = 100;
 
@@ -45,7 +45,7 @@ class ManageMerchantSettings extends Page
 
     public function getTitle(): string
     {
-        return 'Global Settings';
+        return 'Shop-Daten, Rechnung & Versand';
     }
 
     protected function fillForm(): void

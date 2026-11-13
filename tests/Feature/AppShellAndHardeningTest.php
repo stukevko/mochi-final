@@ -130,6 +130,45 @@ class AppShellAndHardeningTest extends TestCase
         $this->assertTrue(\App\Services\TurnstileVerifier::verify('', '127.0.0.1'));
     }
 
+    public function test_dashboard_shows_getting_started_checklist_and_simple_product_form(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->get('/admin')
+            ->assertOk()
+            ->assertSee('Erste Schritte')
+            ->assertSee('SumUp verbinden');
+
+        $this->actingAs($admin)->get('/admin/products/create')
+            ->assertOk()
+            ->assertSee('Stück auf Lager')
+            ->assertDontSee('URL-Slug');
+
+        $this->actingAs($admin)->get(\App\Filament\Pages\ManageSiteSettings::getUrl())
+            ->assertOk()
+            ->assertSee('Highlight-Karte: Produkt aus dem Shop');
+    }
+
+    public function test_product_gets_its_address_automatically(): void
+    {
+        $a = \App\Models\Product::query()->create(['name' => 'Booster Display', 'price' => 5, 'stock' => 1, 'is_active' => true]);
+        $b = \App\Models\Product::query()->create(['name' => 'Booster Display', 'price' => 5, 'stock' => 1, 'is_active' => true]);
+
+        $this->assertSame('booster-display', $a->slug);
+        $this->assertSame('booster-display-2', $b->slug);
+    }
+
+    public function test_home_highlight_card_shows_a_real_product_automatically(): void
+    {
+        \App\Models\Product::query()->create(['name' => 'Altes Produkt', 'price' => 5, 'stock' => 1, 'is_active' => true]);
+        \App\Models\Product::query()->create(['name' => 'Unser Highlight', 'price' => 12.5, 'stock' => 1, 'is_active' => true, 'is_featured' => true]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Unser Highlight')
+            ->assertDontSee('Event-Laufband');
+    }
+
     public function test_checkout_pages_are_never_cached(): void
     {
         $cacheControl = (string) $this->get('/cart')->headers->get('Cache-Control');

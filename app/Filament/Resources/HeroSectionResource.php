@@ -25,6 +25,9 @@ class HeroSectionResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Hero-Bereiche';
 
+    /** Aus dem Menü genommen: für den Laden-Alltag nicht nötig (Seite bleibt per Adresse erreichbar). */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string | \UnitEnum | null $navigationGroup = '📰 Inhalte';
 
     protected static ?int $navigationSort = 22;

@@ -32,7 +32,7 @@ class ManageSystemServices extends Page
 
     protected static string | UnitEnum | null $navigationGroup = '⚙️ Konfiguration';
 
-    protected static ?string $navigationLabel = 'System & Zahlung';
+    protected static ?string $navigationLabel = 'Wartungsmodus';
 
     protected static ?int $navigationSort = 140;
 
@@ -43,7 +43,7 @@ class ManageSystemServices extends Page
 
     public function getTitle(): string
     {
-        return 'System & Zahlung';
+        return 'Wartungsmodus';
     }
 
     protected function fillForm(): void

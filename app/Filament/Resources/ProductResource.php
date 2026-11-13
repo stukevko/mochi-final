@@ -55,22 +55,23 @@ class ProductResource extends Resource
                                     ->label('Produktname')
                                     ->required()
                                     ->maxLength(255)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(fn ($state, $set) => $set('slug', Str::slug((string) $state))),
+                                    ->placeholder('z. B. Pokémon Booster Display „Stürmische Funken“'),
 
                                 Forms\Components\TextInput::make('slug')
-                                    ->label('URL-Slug')
-                                    ->required()
+                                    ->label('Adresse der Produktseite')
+                                    ->helperText('Entsteht automatisch aus dem Namen. Bitte nur ändern, wenn nötig — alte Links funktionieren dann nicht mehr.')
                                     ->maxLength(255)
-                                    ->unique(ignoreRecord: true),
+                                    ->unique(ignoreRecord: true)
+                                    ->visibleOn('edit'),
 
                                 Forms\Components\Textarea::make('short_description')
                                     ->label('Kurzbeschreibung')
+                                    ->helperText('Ein bis zwei Sätze. Steht direkt unter dem Namen.')
                                     ->rows(2)
                                     ->columnSpanFull(),
 
                                 Forms\Components\RichEditor::make('description')
-                                    ->label('Beschreibung')
+                                    ->label('Ausführliche Beschreibung (optional)')
                                     ->columnSpanFull(),
                             ])->columns(2),
 
@@ -78,7 +79,10 @@ class ProductResource extends Resource
                             ->schema([
                                 Forms\Components\FileUpload::make('images')
                                     ->label('Produktbilder')
+                                    ->helperText('Fotos hierher ziehen oder antippen. Das erste Bild ist das Hauptbild — die Reihenfolge lässt sich per Ziehen ändern.')
                                     ->image()
+                                    ->imageEditor()
+                                    ->maxSize(8192)
                                     ->multiple()
                                     ->reorderable()
                                     ->directory('products')
@@ -90,13 +94,13 @@ class ProductResource extends Resource
                         Section::make('Varianten')
                             ->schema([
                                 Forms\Components\Toggle::make('has_variants')
-                                    ->label('Hat Varianten')
-                                    ->helperText('Aktivieren Sie dies, wenn das Produkt in verschiedenen Varianten (z.B. Größen, Farben) verfügbar ist.')
+                                    ->label('Es gibt mehrere Ausführungen')
+                                    ->helperText('Nur einschalten, wenn es den Artikel in mehreren Ausführungen gibt (z. B. Deutsch / Englisch). Für die meisten Artikel: aus lassen.')
                                     ->reactive(),
 
                                 Forms\Components\Placeholder::make('variants_info')
                                     ->label('')
-                                    ->content('Varianten können nach dem Speichern des Produkts im Bearbeitungsmodus verwaltet werden.')
+                                    ->content('Erst speichern — danach erscheint unten der Bereich, in dem die Ausführungen mit eigenem Preis und Bestand angelegt werden.')
                                     ->visible(fn ($get) => $get('has_variants')),
                             ]),
                     ])->columnSpan(['lg' => 2]),
@@ -106,60 +110,61 @@ class ProductResource extends Resource
                         Section::make('Preis & Lager')
                             ->schema([
                                 Forms\Components\TextInput::make('price')
-                                    ->label('Preis')
+                                    ->label('Preis (inkl. MwSt.)')
                                     ->required()
                                     ->numeric()
                                     ->prefix((string) \App\Models\Setting::get('currency_symbol', '€'))
                                     ->minValue(0),
 
                                 Forms\Components\TextInput::make('sale_price')
-                                    ->label('Angebotspreis')
+                                    ->label('Angebotspreis (optional)')
+                                    ->helperText('Nur ausfüllen, wenn der Artikel gerade reduziert ist. Der normale Preis wird dann durchgestrichen.')
                                     ->numeric()
                                     ->prefix((string) \App\Models\Setting::get('currency_symbol', '€'))
                                     ->minValue(0)
                                     ->lt('price'),
 
                                 Forms\Components\TextInput::make('sku')
-                                    ->label('Artikelnummer (SKU)')
+                                    ->label('Artikelnummer')
+                                    ->helperText('Dieselbe Nummer wie in der SumUp-Kasse. Darüber wird der Bestand zwischen Laden und Shop abgeglichen.')
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true),
 
                                 Forms\Components\TextInput::make('stock')
-                                    ->label('Lagerbestand')
+                                    ->label('Stück auf Lager')
+                                    ->helperText('Sinkt automatisch bei jedem Verkauf — online und an der Kasse.')
                                     ->numeric()
                                     ->default(0)
                                     ->minValue(0)
                                     ->hidden(fn ($get) => (bool) $get('has_variants')),
                             ]),
 
-                        Section::make('Organisation')
+                        Section::make('Kategorie')
                             ->schema([
                                 Forms\Components\Select::make('category_id')
                                     ->label('Kategorie')
                                     ->relationship('category', 'name')
                                     ->searchable()
                                     ->preload()
+                                    ->helperText('Fehlt die passende Kategorie? Mit dem Plus rechts legst du sie direkt an.')
                                     ->createOptionForm([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Name')
+                                            ->label('Name der Kategorie')
                                             ->required()
-                                            ->live(onBlur: true)
-                                            ->afterStateUpdated(fn ($state, $set) => $set('slug', Str::slug((string) $state))),
-                                        Forms\Components\TextInput::make('slug')
-                                            ->label('Slug')
-                                            ->required(),
+                                            ->maxLength(120),
                                     ]),
                             ]),
 
-                        Section::make('Status')
+                        Section::make('Sichtbarkeit')
                             ->schema([
                                 Forms\Components\Toggle::make('is_active')
-                                    ->label('Aktiv')
+                                    ->label('Im Shop sichtbar')
+                                    ->helperText('Aus = Entwurf. Kunden sehen den Artikel dann nicht.')
                                     ->default(true),
 
                                 Forms\Components\Toggle::make('is_featured')
-                                    ->label('Hervorgehoben')
-                                    ->helperText('Wird auf der Startseite angezeigt'),
+                                    ->label('Auf der Startseite hervorheben')
+                                    ->helperText('Erscheint als Highlight-Karte, wenn dort nichts anderes gewählt ist.'),
                             ]),
                     ])->columnSpan(['lg' => 1]),
             ])->columns(3);

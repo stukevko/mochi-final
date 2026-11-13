@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -14,7 +17,7 @@ jobs:
         php: ['8.3', '8.4', '8.5']
     name: PHP ${{ matrix.php }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -22,7 +25,7 @@ jobs:
           extensions: intl, gd, sqlite3, pdo_sqlite, mbstring, zip, bcmath
           coverage: none
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -30,12 +33,18 @@ jobs:
       - name: Composer install (Update, falls composer.lock veraltet ist)
         run: composer install --no-interaction --prefer-dist || composer update --no-interaction --prefer-dist
 
-      - name: composer.lock als Artefakt (PHP 8.3 = kompatibelste Auflösung)
-        if: matrix.php == '8.3'
-        uses: actions/upload-artifact@v4
-        with:
-          name: composer-lock
-          path: composer.lock
+      # War composer.lock veraltet (composer.json geändert), wird die neu aufgelöste Lock-Datei
+      # – aufgelöst für PHP 8.3, also kompatibel mit 8.3/8.4/8.5 – auf den Branch zurückgeschrieben.
+      - name: Aktualisierte composer.lock committen
+        if: matrix.php == '8.3' && github.event_name == 'push'
+        run: |
+          if ! git diff --quiet -- composer.lock; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add composer.lock
+            git commit -m "composer.lock aktualisiert (CI, PHP 8.3-Auflösung)"
+            git push
+          fi
 
       - name: Sicherheits-Audit (Composer + npm)
         run: |

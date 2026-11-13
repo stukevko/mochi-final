@@ -62,7 +62,7 @@ class DatabaseSeeder extends Seeder
 <p>Du kannst deine Einwilligung jederzeit über den Link „Cookies“ im Footer widerrufen und „Nur notwendige“ wählen.</p>
 
 <h2>Online-Shop &amp; Bestellung</h2>
-<p>Bei Bestellungen verarbeiten wir die von dir angegebenen Daten (Name, Adresse, E-Mail, Bestellinhalt) zur Vertragserfüllung (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b DSGVO). Zahlungen werden über den konfigurierten Zahlungsdienstleister (z.&nbsp;B. Stripe) abgewickelt; dabei gelten zusätzlich dessen Datenschutzbestimmungen.</p>
+<p>Bei Bestellungen verarbeiten wir die von dir angegebenen Daten (Name, Adresse, E-Mail, Bestellinhalt) zur Vertragserfüllung (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b DSGVO). Zahlungen werden über den konfigurierten Zahlungsdienstleister SumUp abgewickelt; dabei gelten zusätzlich dessen Datenschutzbestimmungen.</p>
 
 <h2>Kontaktformular</h2>
 <p>Daten aus dem Kontaktformular verwenden wir zur Bearbeitung deiner Anfrage (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b bzw. lit.&nbsp;f DSGVO).</p>

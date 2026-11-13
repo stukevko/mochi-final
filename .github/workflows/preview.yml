@@ -1,0 +1,63 @@
+name: Vorschau-Screenshots
+
+# Startet die App mit Demo-Daten und legt Screenshots auf dem Branch "preview-screenshots" ab.
+on:
+  push:
+    branches: ['update/laravel-security-performance-pwa']
+    paths: ['.github/workflows/preview.yml', '.github/preview/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, gd, sqlite3, pdo_sqlite, mbstring, zip, bcmath
+          coverage: none
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: App aufsetzen (Demo-Daten)
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci --no-audit --no-fund
+          npm run build
+          cp .env.example .env
+          {
+            echo "APP_DEBUG=false"
+            echo "MAIL_MAILER=log"
+            echo "QUEUE_CONNECTION=sync"
+            echo "SUMUP_TOKEN=demo-token"
+            echo "SUMUP_MERCHANT_CODE=MCDEMO01"
+            echo "SUMUP_SALES_SYNC=false"
+          } >> .env
+          touch database/database.sqlite
+          php artisan key:generate
+          php artisan migrate --force --seed
+          php artisan storage:link
+      - name: Screenshots
+        run: |
+          php artisan serve --port=8008 > storage/logs/serve.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8008/up > /dev/null && break; sleep 1; done
+          export PRODUCT_SLUG=$(php artisan tinker --execute="echo App\Models\Product::where('is_active', 1)->orderByDesc('is_featured')->value('slug');" | tail -1)
+          echo "Produkt: $PRODUCT_SLUG"
+          mkdir /tmp/pw && cd /tmp/pw && npm init -y > /dev/null && npm i playwright@1 > /dev/null && npx playwright install --with-deps chromium > /dev/null
+          cd "$GITHUB_WORKSPACE" && NODE_PATH=/tmp/pw/node_modules node --preserve-symlinks .github/preview/shots.mjs || true
+          cp .github/preview/shots.mjs /tmp/pw/shots.mjs
+          ls -la preview-out || (cd /tmp/pw && PRODUCT_SLUG=$PRODUCT_SLUG node shots.mjs && mv preview-out "$GITHUB_WORKSPACE/preview-out")
+          tail -n 40 storage/logs/laravel.log 2>/dev/null || true
+      - name: Auf Branch preview-screenshots ablegen
+        run: |
+          mkdir /tmp/pub && cp preview-out/*.jpg /tmp/pub/ && cd /tmp/pub
+          git init -q -b preview-screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add . && git commit -q -m "Vorschau-Screenshots ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" preview-screenshots
